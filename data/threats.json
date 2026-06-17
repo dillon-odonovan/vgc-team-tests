@@ -1,0 +1,47 @@
+{
+  "$comment": "Shared library of named threats, groups, and variation presets. A runtime merges these into a suite's `definitions` (threats/groups + variations) so suites can reference them by name. Mirrors the suite schema's $defs (Threat / Group / Variation) and is validated against them by test/data-lint. The low-friction pattern: `set: \"usage\"` auto-fills a threat's spread/item from the meta snapshot (the most-used spread for the species, plus the item marginal); only override fields when a calc needs precision.",
+  "version": "2026-05",
+  "variations": {
+    "after_intimidate": { "name": "after Intimidate", "boosts": { "atk": -1 } },
+    "plus_one":         { "name": "+1", "boosts": { "atk": 1 } },
+    "plus_two":         { "name": "+2", "boosts": { "atk": 2 } },
+    "helping_hand":     { "name": "Helping Hand", "field": { "attackerSide": { "helpingHand": true } } },
+    "rain":             { "name": "rain", "field": { "weather": "rain" } },
+    "sun":              { "name": "sun", "field": { "weather": "sun" } },
+    "tailwind":         { "name": "Tailwind", "field": { "attackerSide": { "tailwind": true } } }
+  },
+  "threats": {
+    "chomp_dragonclaw":    { "species": "garchomp", "move": "dragonclaw", "set": "usage", "variations": ["after_intimidate"] },
+    "scarf_chomp":         { "species": "garchomp", "item": "choicescarf", "set": "usage" },
+    "flutter_moonblast":   { "species": "fluttermane", "move": "moonblast", "set": "usage" },
+    "incin_flareblitz":    { "species": "incineroar", "move": "flareblitz", "set": "usage", "variations": ["after_intimidate"] },
+    "urshifu_suckerpunch": { "species": "urshifu", "move": "suckerpunch", "set": "usage" },
+    "rilla_grassyglide":   { "species": "rillaboom", "move": "grassyglide", "set": "usage" },
+    "dnite_extremespeed":  { "species": "dragonite", "move": "extremespeed", "set": "usage" }
+  },
+  "groups": {
+    "top10": {
+      "kind": "meta",
+      "description": "The current metagame's 10 most-used Pokemon, each attacking with its best damaging move. Auto-resolved from the suite's meta snapshot.",
+      "from": "usage",
+      "topN": 10,
+      "move": "bestDamaging"
+    },
+    "common_priority": {
+      "kind": "threats",
+      "description": "Frequently-seen priority attackers to check resistance against.",
+      "members": ["urshifu_suckerpunch", "rilla_grassyglide", "dnite_extremespeed"]
+    },
+    "all_types": {
+      "kind": "values",
+      "description": "All 18 attacking types — for marilland-style 'every type is resisted by someone' coverage.",
+      "valueType": "type",
+      "members": ["normal", "fire", "water", "electric", "grass", "ice", "fighting", "poison", "ground", "flying", "psychic", "bug", "rock", "ghost", "dragon", "dark", "steel", "fairy"]
+    },
+    "good_mons": {
+      "kind": "species",
+      "description": "Allow-list of strong, synergistic VGC Pokemon to prioritize.",
+      "members": ["garchomp", "amoonguss", "incineroar", "rillaboom", "fluttermane", "ironhands", "landorustherian", "urshifu", "dragonite", "tornadustherian", "chienpao", "ursaluna"]
+    }
+  }
+}

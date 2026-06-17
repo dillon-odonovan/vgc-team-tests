@@ -1,0 +1,44 @@
+{
+  "$comment": "Move/item constraints. `tagged` reads data/tags.json so 'setup', 'protect', 'speed_control' need no enumeration here. countDistinct over the speedControlKind facet captures 'multiple FORMS of speed control' (distinct mechanisms, not duplicate copies). Atoms: tagged, item, move. Assertions: count, countDistinct.",
+  "$schema": "https://vgc.tests/team-test-suite.schema.json",
+  "schemaVersion": "1.0.0",
+  "name": "Moves and items",
+  "tests": [
+    {
+      "id": "protect-balance",
+      "title": "At least 3 Protect-family users",
+      "rationale": "tagged(move, protect) covers Protect/Detect/Spiky Shield/Baneful Bunker/etc. without listing them here.",
+      "assert": { "count": "members", "where": { "kind": "tagged", "of": "move", "tag": "protect" }, "op": ">=", "value": 3 }
+    },
+    {
+      "id": "has-a-setup-move",
+      "title": "At least one setup move on the team",
+      "rationale": "'types of moves (setup) if a move exists on a team' — tagged(move, setup).",
+      "assert": { "count": "members", "where": { "kind": "tagged", "of": "move", "tag": "setup" }, "op": ">=", "value": 1 }
+    },
+    {
+      "id": "multiple-forms-of-speed-control",
+      "title": "At least 2 distinct forms of speed control",
+      "rationale": "countDistinct over facet:speedControlKind, filtered to speed-control moves — Tailwind + Trick Room counts as 2; two Tailwinds counts as 1.",
+      "assert": {
+        "countDistinct": "facet:speedControlKind",
+        "where": { "kind": "tagged", "of": "move", "tag": "speed_control" },
+        "op": ">=", "value": 2
+      }
+    },
+    {
+      "id": "has-a-lum-berry",
+      "title": "Someone holds a Lum Berry",
+      "rationale": "Literal held-item constraint.",
+      "severity": "info",
+      "assert": { "count": "members", "where": { "kind": "item", "is": "lumberry" }, "op": ">=", "value": 1 }
+    },
+    {
+      "id": "has-taunt",
+      "title": "Someone knows Taunt",
+      "rationale": "Literal move constraint; `has` = knows this move.",
+      "severity": "info",
+      "assert": { "count": "members", "where": { "kind": "move", "has": "taunt" }, "op": ">=", "value": 1 }
+    }
+  ]
+}

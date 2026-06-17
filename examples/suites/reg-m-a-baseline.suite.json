@@ -1,0 +1,160 @@
+{
+  "$schema": "https://vgc.tests/team-test-suite.schema.json",
+  "$comment": "Flagship worked example: a realistic baseline suite. Exercises all four assertion shapes (count / countDistinct / coverage / team) and most atom kinds, plus definitions.threats / groups / predicates. Threats use set:'usage' so spreads auto-fill from the meta snapshot.",
+  "schemaVersion": "1.0.0",
+  "name": "Reg M-A baseline",
+  "description": "A defensive/offensive sanity suite for a VGC team. Hard requirements are severity:error; nice-to-haves are warn/info.",
+  "format": "gen9championsvgc2026regma",
+  "meta": { "snapshot": "2026-05", "source": "smogon-usage" },
+  "definitions": {
+    "threats": {
+      "chomp_dragonclaw": {
+        "species": "garchomp",
+        "move": "dragonclaw",
+        "set": "usage",
+        "variations": [ { "name": "after Intimidate", "boosts": { "atk": -1 } } ]
+      },
+      "scarf_chomp": { "species": "garchomp", "item": "choicescarf", "set": "usage" },
+      "flutter_moonblast": { "species": "fluttermane", "move": "moonblast", "set": "usage" }
+    },
+    "groups": {
+      "top10": { "kind": "meta", "from": "usage", "topN": 10, "move": "bestDamaging" },
+      "all_types": {
+        "kind": "values",
+        "valueType": "type",
+        "members": ["normal","fire","water","electric","grass","ice","fighting","poison","ground","flying","psychic","bug","rock","ghost","dragon","dark","steel","fairy"]
+      },
+      "good_mons": {
+        "kind": "species",
+        "members": ["garchomp","amoonguss","incineroar","rillaboom","fluttermane","ironhands","landorustherian","urshifu","dragonite","tornadustherian","chienpao","ursaluna"]
+      }
+    },
+    "predicates": {
+      "water_resist": { "kind": "typeEffectiveness", "role": "defending", "vsType": "water", "op": "<=", "value": 0.5 },
+      "is_fast": { "kind": "stat", "stat": "spe", "vs": "base", "op": ">", "value": 100 }
+    }
+  },
+  "tests": [
+    {
+      "id": "two-water-resists",
+      "title": "At least 2 Water resists",
+      "rationale": "Sustain vs rain teams and Water spam.",
+      "severity": "error",
+      "assert": { "count": "members", "where": { "kind": "ref", "predicate": "water_resist" }, "op": ">=", "value": 2 }
+    },
+    {
+      "id": "speed-control-variety",
+      "title": "At least 2 distinct forms of speed control",
+      "rationale": "Tailwind + Trick Room + paralysis etc. give redundant ways to win the speed game.",
+      "severity": "error",
+      "assert": {
+        "countDistinct": "facet:speedControlKind",
+        "where": { "kind": "tagged", "of": "move", "tag": "speed_control" },
+        "op": ">=", "value": 2
+      }
+    },
+    {
+      "id": "protect-balance",
+      "title": "At least 3 Protect users",
+      "rationale": "Protect-family lets you stall turns, dodge double-targets, and reposition.",
+      "severity": "error",
+      "assert": { "count": "members", "where": { "kind": "tagged", "of": "move", "tag": "protect" }, "op": ">=", "value": 3 }
+    },
+    {
+      "id": "survive-garchomp-dragonclaw",
+      "title": "2 mons survive Garchomp Dragon Claw",
+      "rationale": "Worst-case (no Intimidate) max roll; gives reliable switch-ins.",
+      "severity": "error",
+      "assert": {
+        "count": "members",
+        "where": { "kind": "survives", "threat": "chomp_dragonclaw", "case": "worst", "roll": "max" },
+        "op": ">=", "value": 2
+      }
+    },
+    {
+      "id": "twohko-top10",
+      "title": "2HKO every top-10 threat",
+      "rationale": "For each of the meta's 10 most-used mons, at least one team member guarantees a 2HKO.",
+      "severity": "warn",
+      "assert": {
+        "coverage": {
+          "group": "top10",
+          "each": { "kind": "koes", "threat": "$each", "hits": 2, "roll": "min" },
+          "atLeast": 1,
+          "of": "all"
+        }
+      }
+    },
+    {
+      "id": "resist-every-type",
+      "title": "Every attacking type is resisted by someone (marilland)",
+      "rationale": "For each of the 18 types, at least one member takes it at <=0.5x.",
+      "severity": "warn",
+      "assert": {
+        "coverage": {
+          "group": "all_types",
+          "each": { "kind": "typeEffectiveness", "role": "defending", "vsType": "$each", "op": "<=", "value": 0.5 },
+          "atLeast": 1,
+          "of": "all"
+        }
+      }
+    },
+    {
+      "id": "has-intimidate",
+      "title": "At least one Intimidate",
+      "rationale": "Opening Attack drop swings damage races and survival calcs.",
+      "severity": "error",
+      "assert": { "count": "members", "where": { "kind": "ability", "is": "intimidate" }, "op": ">=", "value": 1 }
+    },
+    {
+      "id": "fast-core",
+      "title": "At least 2 mons faster than base 100",
+      "rationale": "Natural speed control without relying on Tailwind/Scarf.",
+      "severity": "warn",
+      "assert": { "count": "members", "where": { "kind": "ref", "predicate": "is_fast" }, "op": ">=", "value": 2 }
+    },
+    {
+      "id": "fissure-immunity",
+      "title": "An answer to OHKO moves (Fissure)",
+      "rationale": "Flying/Levitate/Air Balloon dodge Ground-type Fissure; Sturdy/Sash block any OHKO.",
+      "severity": "info",
+      "assert": { "count": "members", "where": { "kind": "immuneTo", "moveTag": "ohko" }, "op": ">=", "value": 1 }
+    },
+    {
+      "id": "team-has-disruption-engine",
+      "title": "Team brings Fake Out AND some speed control",
+      "rationale": "Existential team check: a Fake Out user somewhere AND a speed-control move somewhere.",
+      "severity": "warn",
+      "assert": {
+        "team": {
+          "kind": "all",
+          "of": [
+            { "kind": "move", "has": "fakeout" },
+            { "kind": "tagged", "of": "move", "tag": "speed_control" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "prioritize-good-mons",
+      "title": "At least 4 of 6 from the good-mons list",
+      "rationale": "Bias the build toward proven, synergistic Pokemon.",
+      "severity": "info",
+      "assert": { "count": "members", "where": { "kind": "inGroup", "group": "good_mons" }, "op": ">=", "value": 4 }
+    },
+    {
+      "id": "tera-flexibility",
+      "title": "At least 3 distinct Tera types",
+      "rationale": "Diverse Tera options keep your defensive/offensive answers ambiguous to the opponent.",
+      "severity": "info",
+      "assert": { "countDistinct": "teraType", "op": ">=", "value": 3 }
+    },
+    {
+      "id": "stop-trick-room-turn-1",
+      "title": "[experimental] Stops Trick Room before it matters",
+      "rationale": "Reserved foul-play atom: simulate vs common hard-Trick-Room leads. Flaky signal; info only.",
+      "severity": "info",
+      "assert": { "team": { "kind": "foulPlay", "scenario": "stop_trickroom_t1", "threshold": 0.6 } }
+    }
+  ]
+}

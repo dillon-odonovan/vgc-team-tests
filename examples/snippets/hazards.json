@@ -1,0 +1,25 @@
+{
+  "$comment": "Hazard control. canRemove looks up data/interactions.json hazardRemoval: toxic spikes are absorbed by a grounded Poison type OR removed by Rapid Spin / Mortal Spin / Defog / Tidy Up. Atom: canRemove.",
+  "$schema": "https://vgc.tests/team-test-suite.schema.json",
+  "schemaVersion": "1.0.0",
+  "name": "Hazard control",
+  "tests": [
+    {
+      "id": "can-remove-toxic-spikes",
+      "title": "A way to remove Toxic Spikes",
+      "rationale": "Grounded Poison absorb is the common doubles answer; spin/defog also satisfy.",
+      "assert": { "count": "members", "where": { "kind": "canRemove", "hazard": "toxicspikes" }, "op": ">=", "value": 1 }
+    },
+    {
+      "id": "grounded-poison-absorber",
+      "title": "A grounded Poison type (absorbs Toxic Spikes on switch-in)",
+      "rationale": "Expressed directly with the `type` atom + the grounded notion folded into canRemove above; here as an explicit AND.",
+      "severity": "info",
+      "assert": {
+        "count": "members",
+        "where": { "kind": "all", "of": [ { "kind": "type", "has": "poison" }, { "kind": "not", "of": { "kind": "type", "has": "flying" } } ] },
+        "op": ">=", "value": 1
+      }
+    }
+  ]
+}

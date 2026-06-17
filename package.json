@@ -1,0 +1,28 @@
+{
+  "name": "vgc-team-tests",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Declarative, composable 'unit tests' for VGC (doubles, bring-6-choose-4) Pokemon teams. A JSON Schema + reference-data design; the evaluator/runner is future work.",
+  "keywords": [
+    "pokemon",
+    "vgc",
+    "doubles",
+    "teambuilder",
+    "json-schema",
+    "constraints"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "validate": "node --test test/validate-examples.test.mjs",
+    "lint:data": "node --test test/data-lint.test.mjs",
+    "build:types": "json2ts -i schema/team-test-suite.schema.json -o types/suite.d.ts && json2ts -i schema/team-test-report.schema.json -o types/report.d.ts"
+  },
+  "devDependencies": {
+    "@pkmn/dex": "^0.10.10",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "json-schema-to-typescript": "^15.0.4"
+  }
+}

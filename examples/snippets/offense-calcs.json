@@ -1,0 +1,43 @@
+{
+  "$schema": "https://vgc.tests/team-test-suite.schema.json",
+  "$comment": "Damage calcs you must DEAL. Atoms: koes, dealsDamage. Assertions: count, coverage (meta group auto-resolved from usage). A Threat is a full set usable on either side; its `move` field applies only when it attacks (survives), so as a koes/dealsDamage TARGET it just supplies defensive bulk.",
+  "schemaVersion": "1.0.0",
+  "name": "Offensive calcs",
+  "meta": { "snapshot": "2026-05", "source": "smogon-usage" },
+  "definitions": {
+    "threats": {
+      "flutter_def": { "species": "fluttermane", "set": "usage" },
+      "incin_def": { "species": "incineroar", "set": "usage" }
+    },
+    "groups": {
+      "top10": { "kind": "meta", "from": "usage", "topN": 10, "move": "bestDamaging" }
+    }
+  },
+  "tests": [
+    {
+      "id": "twohko-every-top10",
+      "title": "2HKO every top-10 threat",
+      "rationale": "For each meta top-10 mon, >=1 member guarantees a 2HKO (koes hits:2, roll:min). The report's coverage.uncovered is the offensive gap.",
+      "assert": {
+        "coverage": {
+          "group": "top10",
+          "each": { "kind": "koes", "threat": "$each", "hits": 2, "roll": "min" },
+          "atLeast": 1
+        }
+      }
+    },
+    {
+      "id": "ohko-flutter-mane",
+      "title": "Someone guarantees an OHKO on Flutter Mane",
+      "rationale": "koes hits:1 roll:min = guaranteed KO even on the low roll.",
+      "assert": { "count": "members", "where": { "kind": "koes", "threat": "flutter_def", "hits": 1, "roll": "min" }, "op": ">=", "value": 1 }
+    },
+    {
+      "id": "pressure-incineroar",
+      "title": "Someone deals >=50% to Incineroar",
+      "rationale": "Finer than a KO check: dealsDamage with a fraction threshold on the low roll.",
+      "severity": "warn",
+      "assert": { "count": "members", "where": { "kind": "dealsDamage", "threat": "incin_def", "roll": "min", "fraction": { "op": ">=", "value": 0.5 } }, "op": ">=", "value": 1 }
+    }
+  ]
+}

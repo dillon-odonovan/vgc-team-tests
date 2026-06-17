@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "1.0.0",
+  "suite": "Reg M-A baseline",
+  "format": "gen9championsvgc2026regma",
+  "generatedAt": "2026-06-16T00:00:00Z",
+  "team": [
+    { "slot": 0, "species": "incineroar" },
+    { "slot": 1, "species": "fluttermane" },
+    { "slot": 2, "species": "amoonguss" },
+    { "slot": 3, "species": "garchomp" },
+    { "slot": 4, "species": "rillaboom" },
+    { "slot": 5, "species": "ironhands" }
+  ],
+  "passed": false,
+  "summary": {
+    "error": { "passed": 4, "failed": 1 },
+    "warn": { "passed": 1, "failed": 1 },
+    "info": { "passed": 2, "failed": 1 }
+  },
+  "results": [
+    {
+      "id": "two-water-resists",
+      "title": "At least 2 Water resists",
+      "severity": "error",
+      "pass": true,
+      "actual": 2, "op": ">=", "value": 2,
+      "satisfiedBy": [ { "slot": 3, "species": "garchomp" }, { "slot": 4, "species": "rillaboom" } ]
+    },
+    {
+      "id": "speed-control-variety",
+      "title": "At least 2 distinct forms of speed control",
+      "severity": "error",
+      "pass": true,
+      "actual": 2, "op": ">=", "value": 2,
+      "satisfiedBy": [ { "slot": 1, "species": "fluttermane" }, { "slot": 4, "species": "rillaboom" } ],
+      "detail": { "distinctValues": ["tailwind", "trick_room"] }
+    },
+    {
+      "id": "protect-balance",
+      "title": "At least 3 Protect users",
+      "severity": "error",
+      "pass": false,
+      "actual": 2, "op": ">=", "value": 3,
+      "satisfiedBy": [ { "slot": 0, "species": "incineroar" }, { "slot": 2, "species": "amoonguss" } ],
+      "message": "Only 2 Protect-family users; add one more for board control."
+    },
+    {
+      "id": "survive-garchomp-dragonclaw",
+      "title": "2 mons survive Garchomp Dragon Claw",
+      "severity": "error",
+      "pass": true,
+      "actual": 3, "op": ">=", "value": 2,
+      "satisfiedBy": [ { "slot": 0, "species": "incineroar" }, { "slot": 2, "species": "amoonguss" }, { "slot": 5, "species": "ironhands" } ],
+      "detail": { "worstCase": "no Intimidate", "rollPct": { "ironhands": [61.2, 72.4] } }
+    },
+    {
+      "id": "twohko-top10",
+      "title": "2HKO every top-10 threat",
+      "severity": "warn",
+      "pass": false,
+      "coverage": {
+        "of": "all",
+        "atLeast": 1,
+        "covered": ["fluttermane", "incineroar", "garchomp", "rillaboom", "landorustherian", "amoonguss", "urshifu", "chienpao"],
+        "uncovered": ["ironhands", "ironbundle"],
+        "byElement": { "fluttermane": [ { "slot": 0, "species": "incineroar" } ] }
+      },
+      "message": "2 of 10 top threats are not guaranteed-2HKO'd by anyone."
+    },
+    {
+      "id": "has-intimidate",
+      "title": "At least one Intimidate",
+      "severity": "error",
+      "pass": true,
+      "actual": 1, "op": ">=", "value": 1,
+      "satisfiedBy": [ { "slot": 0, "species": "incineroar" } ]
+    },
+    {
+      "id": "fissure-immunity",
+      "title": "An answer to OHKO moves (Fissure)",
+      "severity": "info",
+      "pass": false,
+      "actual": 0, "op": ">=", "value": 1,
+      "satisfiedBy": [],
+      "message": "No Flying/Levitate/Balloon/Sturdy/Sash answer to Fissure."
+    }
+  ]
+}

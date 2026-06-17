@@ -1,0 +1,43 @@
+{
+  "$comment": "Roster-level constraints. Atoms: inGroup (species allow-list), species. Assertions: count, team (existential — each member-atom means 'some member satisfies it', so all/any compose DIFFERENT requirements).",
+  "$schema": "https://vgc.tests/team-test-suite.schema.json",
+  "schemaVersion": "1.0.0",
+  "name": "Composition",
+  "definitions": {
+    "groups": {
+      "good_mons": {
+        "kind": "species",
+        "members": ["garchomp","amoonguss","incineroar","rillaboom","fluttermane","ironhands","landorustherian","urshifu","dragonite","tornadustherian","chienpao","ursaluna"]
+      }
+    }
+  },
+  "tests": [
+    {
+      "id": "prioritize-good-mons",
+      "title": "At least 4 of 6 from the good-mons allow-list",
+      "rationale": "Bias the build toward proven Pokemon.",
+      "assert": { "count": "members", "where": { "kind": "inGroup", "group": "good_mons" }, "op": ">=", "value": 4 }
+    },
+    {
+      "id": "must-include-amoonguss",
+      "title": "Team includes Amoonguss",
+      "rationale": "Literal species requirement (Redirection + Spore backbone).",
+      "severity": "info",
+      "assert": { "count": "members", "where": { "kind": "species", "is": "amoonguss" }, "op": ">=", "value": 1 }
+    },
+    {
+      "id": "redirection-and-fake-out",
+      "title": "Team brings redirection AND a Fake Out",
+      "rationale": "Existential team check: (a redirection move somewhere) AND (a Fake Out somewhere) — two DIFFERENT slots may satisfy the two clauses.",
+      "assert": {
+        "team": {
+          "kind": "all",
+          "of": [
+            { "kind": "tagged", "of": "move", "tag": "redirection" },
+            { "kind": "move", "has": "fakeout" }
+          ]
+        }
+      }
+    }
+  ]
+}

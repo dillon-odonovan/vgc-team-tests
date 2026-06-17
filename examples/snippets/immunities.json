@@ -1,0 +1,40 @@
+{
+  "$comment": "Immunities. The generic immuneTo atom looks the effect up in data/interactions.json, so it covers type-, ability-, and item-based sources uniformly. Atoms: immuneTo (effect + moveTag), ability.",
+  "$schema": "https://vgc.tests/team-test-suite.schema.json",
+  "schemaVersion": "1.0.0",
+  "name": "Immunities",
+  "tests": [
+    {
+      "id": "prankster-immunity",
+      "title": "An answer to Prankster (a Dark type)",
+      "rationale": "Dark types ignore Prankster-boosted status. interactions.json: prankster -> {type: dark}.",
+      "assert": { "count": "members", "where": { "kind": "immuneTo", "effect": "prankster" }, "op": ">=", "value": 1 }
+    },
+    {
+      "id": "multiple-powder-immunities",
+      "title": "At least 2 powder immunities",
+      "rationale": "Grass type, Overcoat, or Safety Goggles. The 'multiple immunities to powder' constraint.",
+      "assert": { "count": "members", "where": { "kind": "immuneTo", "effect": "powder" }, "op": ">=", "value": 2 }
+    },
+    {
+      "id": "intimidate-immunity",
+      "title": "Someone ignores Intimidate",
+      "rationale": "Clear Body / Inner Focus / Own Tempo ... or a Clear Amulet. interactions.json: intimidate -> {ability:[...]} | {item:[clearamulet]}.",
+      "severity": "info",
+      "assert": { "count": "members", "where": { "kind": "immuneTo", "effect": "intimidate" }, "op": ">=", "value": 1 }
+    },
+    {
+      "id": "fissure-immunity",
+      "title": "An answer to Fissure / OHKO moves",
+      "rationale": "moveTag:'ohko' delegates to per-move type immunity (Flying/Levitate/Balloon vs Ground Fissure) plus Sturdy/Sash.",
+      "severity": "info",
+      "assert": { "count": "members", "where": { "kind": "immuneTo", "moveTag": "ohko" }, "op": ">=", "value": 1 }
+    },
+    {
+      "id": "intimidate-present",
+      "title": "At least one Intimidate of our own",
+      "rationale": "Plain identity check on ability.",
+      "assert": { "count": "members", "where": { "kind": "ability", "is": "intimidate" }, "op": ">=", "value": 1 }
+    }
+  ]
+}

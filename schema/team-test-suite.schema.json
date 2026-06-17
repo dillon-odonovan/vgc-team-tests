@@ -1,0 +1,579 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vgc.tests/team-test-suite.schema.json",
+  "title": "VGC Team Test Suite",
+  "description": "A declarative, composable suite of constraints ('unit tests') for a VGC (doubles, bring-6-choose-4) Pokemon team. Every test reduces to COUNT(members matching a predicate) compared to a threshold; meta-specific knowledge (what is 'speed control', what is immune to 'powder', threat spreads) lives in referenced reference data, not in this schema.",
+  "type": "object",
+  "required": ["schemaVersion", "tests"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "$comment": { "type": "string", "description": "Free-text authoring note; ignored by evaluators." },
+    "schemaVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this suite schema the document targets."
+    },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "format": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+$",
+      "description": "Showdown format id (e.g. 'gen9championsvgc2026regma'). Drives legality, EV model, and the usage-stats source for 'set: usage' threats. EV caps are format-driven and intentionally NOT enforced here."
+    },
+    "meta": {
+      "type": "object",
+      "description": "Which metagame snapshot resolves 'set: usage' spreads and meta-derived threat groups.",
+      "properties": {
+        "snapshot": { "type": "string", "description": "e.g. '2026-05' — a usage-stats period." },
+        "source": { "type": "string", "description": "e.g. 'smogon-usage'." }
+      },
+      "additionalProperties": true
+    },
+    "extends": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Relative paths to other suites whose tests/definitions are merged in before this one's (composition)."
+    },
+    "definitions": {
+      "type": "object",
+      "description": "Reusable, named fragments referenced by tests.",
+      "additionalProperties": false,
+      "properties": {
+        "threats": {
+          "type": "object",
+          "description": "Named calc/speed targets. Reference by name from survives/koes/outspeeds/dealsDamage atoms.",
+          "propertyNames": { "$ref": "#/$defs/Name" },
+          "additionalProperties": { "$ref": "#/$defs/Threat" }
+        },
+        "groups": {
+          "type": "object",
+          "description": "Named sets (species allow-lists, threat groups, value lists) used by inGroup atoms and coverage assertions.",
+          "propertyNames": { "$ref": "#/$defs/Name" },
+          "additionalProperties": { "$ref": "#/$defs/Group" }
+        },
+        "predicates": {
+          "type": "object",
+          "description": "Named reusable predicates, referenced via {\"kind\":\"ref\",\"predicate\":\"<name>\"}.",
+          "propertyNames": { "$ref": "#/$defs/Name" },
+          "additionalProperties": { "$ref": "#/$defs/Predicate" }
+        }
+      }
+    },
+    "tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Test" }
+    }
+  },
+
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+$",
+      "description": "A canonical Showdown id: lowercase, alphanumerics only, no spaces or punctuation (e.g. 'Landorus-Therian' -> 'landorustherian', 'Freeze-Dry' -> 'freezedry', 'Choice Scarf' -> 'choicescarf')."
+    },
+    "Name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]*$",
+      "description": "A definition key / reference (threat, group, predicate). Lowercase, may contain '-' and '_'."
+    },
+    "TypeName": {
+      "type": "string",
+      "enum": ["normal","fire","water","electric","grass","ice","fighting","poison","ground","flying","psychic","bug","rock","ghost","dragon","dark","steel","fairy"]
+    },
+    "TeraType": {
+      "type": "string",
+      "enum": ["normal","fire","water","electric","grass","ice","fighting","poison","ground","flying","psychic","bug","rock","ghost","dragon","dark","steel","fairy","stellar"]
+    },
+    "TypeNameOrEach": {
+      "anyOf": [ { "$ref": "#/$defs/TypeName" }, { "const": "$each" } ]
+    },
+    "NameOrEach": {
+      "anyOf": [ { "$ref": "#/$defs/Name" }, { "const": "$each" } ]
+    },
+    "StatKey": {
+      "type": "string",
+      "enum": ["hp","atk","def","spa","spd","spe"],
+      "description": "Canonical Showdown stat key order (hp, atk, def, spa, spd, spe)."
+    },
+    "Nature": {
+      "type": "string",
+      "enum": ["hardy","lonely","brave","adamant","naughty","bold","docile","relaxed","impish","lax","timid","hasty","serious","jolly","naive","modest","mild","quiet","bashful","rash","calm","gentle","sassy","careful","quirky"]
+    },
+    "Gender": { "type": "string", "enum": ["M","F","N"] },
+    "Op": {
+      "type": "string",
+      "enum": [">=","<=",">","<","==","!="],
+      "description": "Comparison operator for thresholds and numeric atoms."
+    },
+    "StatModifier": {
+      "type": "string",
+      "description": "A named multiplier applied to a computed stat (mostly speed). Closed vocab the evaluator understands; extend here as needed.",
+      "enum": ["scarf","tailwind","paralysis","swift_swim","chlorophyll","sand_rush","slush_rush","surge_surfer","unburden","quark_drive_spe","protosynthesis_spe","choice_band","choice_specs","iron_ball","grass_pelt"]
+    },
+    "Roll": { "type": "string", "enum": ["min","max","avg"] },
+    "EvSpread": {
+      "type": "object",
+      "description": "EV (or, in Champions formats, stat-point) investment. Caps are format-driven and not enforced here.",
+      "additionalProperties": false,
+      "propertyNames": { "$ref": "#/$defs/StatKey" },
+      "properties": {
+        "hp": { "type": "integer", "minimum": 0 },
+        "atk": { "type": "integer", "minimum": 0 },
+        "def": { "type": "integer", "minimum": 0 },
+        "spa": { "type": "integer", "minimum": 0 },
+        "spd": { "type": "integer", "minimum": 0 },
+        "spe": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "Boosts": {
+      "type": "object",
+      "description": "Stat-stage boosts (-6..+6), e.g. {\"atk\": -1} for one Intimidate.",
+      "additionalProperties": false,
+      "properties": {
+        "atk": { "type": "integer", "minimum": -6, "maximum": 6 },
+        "def": { "type": "integer", "minimum": -6, "maximum": 6 },
+        "spa": { "type": "integer", "minimum": -6, "maximum": 6 },
+        "spd": { "type": "integer", "minimum": -6, "maximum": 6 },
+        "spe": { "type": "integer", "minimum": -6, "maximum": 6 },
+        "acc": { "type": "integer", "minimum": -6, "maximum": 6 },
+        "eva": { "type": "integer", "minimum": -6, "maximum": 6 }
+      }
+    },
+    "SideSpec": {
+      "type": "object",
+      "description": "Side conditions, projecting onto @smogon/calc Side.",
+      "additionalProperties": false,
+      "properties": {
+        "tailwind": { "type": "boolean" },
+        "reflect": { "type": "boolean" },
+        "lightScreen": { "type": "boolean" },
+        "auroraVeil": { "type": "boolean" },
+        "helpingHand": { "type": "boolean" },
+        "friendGuard": { "type": "boolean" },
+        "isProtected": { "type": "boolean" }
+      }
+    },
+    "FieldSpec": {
+      "type": "object",
+      "description": "Battle field, projecting onto @smogon/calc Field. gameType defaults to doubles.",
+      "additionalProperties": false,
+      "properties": {
+        "gameType": { "type": "string", "enum": ["singles","doubles"], "default": "doubles" },
+        "weather": { "type": "string", "enum": ["sun","rain","sand","snow","none"] },
+        "terrain": { "type": "string", "enum": ["electric","grassy","misty","psychic","none"] },
+        "trickRoom": { "type": "boolean" },
+        "attackerSide": { "$ref": "#/$defs/SideSpec" },
+        "defenderSide": { "$ref": "#/$defs/SideSpec" }
+      }
+    },
+    "Variation": {
+      "type": "object",
+      "description": "An override bundle applied on top of a threat to model a board state (e.g. afterIntimidate, plus1, helpingHand, rain). Inline, or referenced by name from data/threats.json variations.",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "item": { "$ref": "#/$defs/Id" },
+        "ability": { "$ref": "#/$defs/Id" },
+        "boosts": { "$ref": "#/$defs/Boosts" },
+        "field": { "$ref": "#/$defs/FieldSpec" }
+      }
+    },
+    "Threat": {
+      "type": "object",
+      "description": "An opposing Pokemon used as a calc target and/or speed-tier comparand. Fields project directly onto @smogon/calc's Pokemon + Move + Field. The low-friction default is set:'usage' — name a species (and optionally a move) and let the meta fill the spread/item.",
+      "required": ["species"],
+      "additionalProperties": false,
+      "properties": {
+        "species": { "$ref": "#/$defs/Id" },
+        "move": { "$ref": "#/$defs/Id", "description": "Omit for speed-only threats (outspeeds)." },
+        "set": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$",
+          "description": "'usage' (the low-friction default) auto-fills spread + item from the suite's meta snapshot; any other value names a set preset."
+        },
+        "item": { "$ref": "#/$defs/Id" },
+        "ability": { "$ref": "#/$defs/Id" },
+        "nature": { "$ref": "#/$defs/Nature" },
+        "evs": { "$ref": "#/$defs/EvSpread" },
+        "ivs": { "$ref": "#/$defs/EvSpread" },
+        "level": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "teraType": { "$ref": "#/$defs/TeraType" },
+        "tera": { "type": "boolean", "description": "Whether the threat is Terastallized for this calc." },
+        "boosts": { "$ref": "#/$defs/Boosts" },
+        "isCrit": { "type": "boolean" },
+        "field": { "$ref": "#/$defs/FieldSpec" },
+        "variations": {
+          "type": "array",
+          "description": "Named (string) or inline variations expanded into multiple calc instances; survives/koes 'case' selects across them.",
+          "items": {
+            "oneOf": [ { "$ref": "#/$defs/Name" }, { "$ref": "#/$defs/Variation" } ]
+          }
+        }
+      }
+    },
+    "ThreatRef": {
+      "oneOf": [ { "$ref": "#/$defs/Name" }, { "$ref": "#/$defs/Threat" } ]
+    },
+    "Group": {
+      "type": "object",
+      "description": "A named set used by inGroup atoms (species kind) and coverage assertions (threats / values / meta kinds).",
+      "required": ["kind"],
+      "oneOf": [
+        {
+          "title": "SpeciesGroup",
+          "additionalProperties": false,
+          "required": ["kind", "members"],
+          "properties": {
+            "kind": { "const": "species" },
+            "description": { "type": "string" },
+            "members": { "type": "array", "items": { "$ref": "#/$defs/Id" }, "minItems": 1 }
+          }
+        },
+        {
+          "title": "ThreatsGroup",
+          "additionalProperties": false,
+          "required": ["kind", "members"],
+          "properties": {
+            "kind": { "const": "threats" },
+            "description": { "type": "string" },
+            "members": { "type": "array", "items": { "$ref": "#/$defs/ThreatRef" }, "minItems": 1 }
+          }
+        },
+        {
+          "title": "MetaThreatsGroup",
+          "additionalProperties": false,
+          "required": ["kind", "from"],
+          "properties": {
+            "kind": { "const": "meta" },
+            "description": { "type": "string" },
+            "from": { "const": "usage" },
+            "topN": { "type": "integer", "minimum": 1 },
+            "minUsage": { "type": "number", "minimum": 0, "maximum": 100 },
+            "move": {
+              "description": "Which move each resolved threat attacks with: a heuristic or an explicit move id.",
+              "oneOf": [
+                { "enum": ["bestDamaging", "bestStab"] },
+                { "$ref": "#/$defs/Id" }
+              ]
+            }
+          }
+        },
+        {
+          "title": "ValuesGroup",
+          "description": "A literal set of values (e.g. all 18 types) to iterate in coverage assertions; $each binds to each value.",
+          "additionalProperties": false,
+          "required": ["kind", "valueType", "members"],
+          "properties": {
+            "kind": { "const": "values" },
+            "description": { "type": "string" },
+            "valueType": { "type": "string", "enum": ["type", "move", "item", "ability", "species"] },
+            "members": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+          }
+        }
+      ]
+    },
+
+    "Test": {
+      "type": "object",
+      "required": ["id", "assert"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+        "title": { "type": "string" },
+        "rationale": { "type": "string", "description": "Why this constraint matters — surfaced in reports." },
+        "severity": { "type": "string", "enum": ["error", "warn", "info"], "default": "error" },
+        "weight": { "type": "number", "minimum": 0, "default": 1 },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "assert": { "$ref": "#/$defs/Assert" }
+      }
+    },
+
+    "Assert": {
+      "description": "The quantifier + threshold. Exactly one of the four shapes.",
+      "oneOf": [
+        {
+          "title": "CountAssertion",
+          "description": "Number of team members satisfying 'where' (all members if omitted), compared to value.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["count", "op", "value"],
+          "properties": {
+            "count": { "const": "members" },
+            "where": { "$ref": "#/$defs/Predicate" },
+            "op": { "$ref": "#/$defs/Op" },
+            "value": { "type": "integer", "minimum": 0 }
+          }
+        },
+        {
+          "title": "CountDistinctAssertion",
+          "description": "Number of DISTINCT values of an attribute among members (optionally filtered by 'where') — for 'multiple FORMS of X' (variety).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["countDistinct", "op", "value"],
+          "properties": {
+            "countDistinct": {
+              "type": "string",
+              "description": "Attribute to count distinct values of: 'species' | 'item' | 'ability' | 'teraType' | 'type' | 'move' | 'facet:<facetKey>' (e.g. 'facet:speedControlKind')."
+            },
+            "where": { "$ref": "#/$defs/Predicate" },
+            "op": { "$ref": "#/$defs/Op" },
+            "value": { "type": "integer", "minimum": 0 }
+          }
+        },
+        {
+          "title": "CoverageAssertion",
+          "description": "For {of} elements of a group, at least {atLeast} members satisfy 'each'. The current element binds to '$each' inside 'each'. Powers 'for every X, someone handles it' (the marilland premise, '2HKO every top-N').",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["coverage"],
+          "properties": {
+            "coverage": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["group", "each"],
+              "properties": {
+                "group": { "$ref": "#/$defs/Name" },
+                "by": { "const": "members", "default": "members" },
+                "each": { "$ref": "#/$defs/Predicate" },
+                "atLeast": { "type": "integer", "minimum": 1, "default": 1 },
+                "of": { "type": "string", "enum": ["all", "any"], "default": "all" }
+              }
+            }
+          }
+        },
+        {
+          "title": "TeamAssertion",
+          "description": "Whole-team escape hatch: a boolean combination of EXISTENTIAL member requirements. In team scope each member-atom means 'some member satisfies it', so all/any/not compose across DIFFERENT requirements, e.g. (someone has Fake Out) AND (someone has Trick Room).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["team"],
+          "properties": {
+            "team": { "$ref": "#/$defs/Predicate" }
+          }
+        }
+      ]
+    },
+
+    "PredicateList": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Predicate" }
+    },
+
+    "Predicate": {
+      "description": "A boolean expression over a single team member (or, in team scope, existentially over the team). Discriminated by 'kind'.",
+      "type": "object",
+      "required": ["kind"],
+      "oneOf": [
+        {
+          "title": "all", "additionalProperties": false, "required": ["kind", "of"],
+          "properties": { "kind": { "const": "all" }, "of": { "$ref": "#/$defs/PredicateList" } }
+        },
+        {
+          "title": "any", "additionalProperties": false, "required": ["kind", "of"],
+          "properties": { "kind": { "const": "any" }, "of": { "$ref": "#/$defs/PredicateList" } }
+        },
+        {
+          "title": "not", "additionalProperties": false, "required": ["kind", "of"],
+          "properties": { "kind": { "const": "not" }, "of": { "$ref": "#/$defs/Predicate" } }
+        },
+        {
+          "title": "atLeastK", "additionalProperties": false, "required": ["kind", "k", "of"],
+          "properties": { "kind": { "const": "atLeastK" }, "k": { "type": "integer", "minimum": 1 }, "of": { "$ref": "#/$defs/PredicateList" } }
+        },
+        {
+          "title": "ref", "additionalProperties": false, "required": ["kind", "predicate"],
+          "properties": { "kind": { "const": "ref" }, "predicate": { "$ref": "#/$defs/Name" } }
+        },
+
+        {
+          "title": "species", "additionalProperties": false, "required": ["kind"],
+          "properties": { "kind": { "const": "species" }, "is": { "$ref": "#/$defs/Id" }, "in": { "type": "array", "items": { "$ref": "#/$defs/Id" } } },
+          "anyOf": [ { "required": ["is"] }, { "required": ["in"] } ]
+        },
+        {
+          "title": "ability", "additionalProperties": false, "required": ["kind"],
+          "properties": { "kind": { "const": "ability" }, "is": { "$ref": "#/$defs/Id" }, "in": { "type": "array", "items": { "$ref": "#/$defs/Id" } } },
+          "anyOf": [ { "required": ["is"] }, { "required": ["in"] } ]
+        },
+        {
+          "title": "nature", "additionalProperties": false, "required": ["kind"],
+          "properties": { "kind": { "const": "nature" }, "is": { "$ref": "#/$defs/Nature" }, "in": { "type": "array", "items": { "$ref": "#/$defs/Nature" } } },
+          "anyOf": [ { "required": ["is"] }, { "required": ["in"] } ]
+        },
+        {
+          "title": "gender", "additionalProperties": false, "required": ["kind", "is"],
+          "properties": { "kind": { "const": "gender" }, "is": { "$ref": "#/$defs/Gender" } }
+        },
+        {
+          "title": "level", "additionalProperties": false, "required": ["kind", "op", "value"],
+          "properties": { "kind": { "const": "level" }, "op": { "$ref": "#/$defs/Op" }, "value": { "type": "integer", "minimum": 1, "maximum": 100 } }
+        },
+        {
+          "title": "item", "additionalProperties": false, "required": ["kind"],
+          "properties": {
+            "kind": { "const": "item" },
+            "is": { "$ref": "#/$defs/Id" },
+            "in": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+            "present": { "type": "boolean", "description": "true = holds any item; false = holds no item." }
+          },
+          "anyOf": [ { "required": ["is"] }, { "required": ["in"] }, { "required": ["present"] } ]
+        },
+        {
+          "title": "move", "additionalProperties": false, "required": ["kind"],
+          "properties": {
+            "kind": { "const": "move" },
+            "has": { "$ref": "#/$defs/Id" },
+            "hasAny": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
+            "hasAll": { "type": "array", "items": { "$ref": "#/$defs/Id" } }
+          },
+          "anyOf": [ { "required": ["has"] }, { "required": ["hasAny"] }, { "required": ["hasAll"] } ]
+        },
+        {
+          "title": "type", "additionalProperties": false, "required": ["kind"],
+          "properties": {
+            "kind": { "const": "type" },
+            "has": { "$ref": "#/$defs/TypeName" },
+            "hasAny": { "type": "array", "items": { "$ref": "#/$defs/TypeName" } },
+            "isExactly": { "type": "array", "items": { "$ref": "#/$defs/TypeName" }, "minItems": 1, "maxItems": 2 }
+          },
+          "anyOf": [ { "required": ["has"] }, { "required": ["hasAny"] }, { "required": ["isExactly"] } ]
+        },
+        {
+          "title": "teraType", "additionalProperties": false, "required": ["kind"],
+          "properties": { "kind": { "const": "teraType" }, "is": { "$ref": "#/$defs/TeraType" }, "in": { "type": "array", "items": { "$ref": "#/$defs/TeraType" } } },
+          "anyOf": [ { "required": ["is"] }, { "required": ["in"] } ]
+        },
+        {
+          "title": "inGroup", "additionalProperties": false, "required": ["kind", "group"],
+          "properties": { "kind": { "const": "inGroup" }, "group": { "$ref": "#/$defs/Name" } }
+        },
+        {
+          "title": "tagged",
+          "description": "Member has an entity of type 'of' carrying 'tag' in data/tags.json. With facet+equals, that entity's facet value must equal 'equals'.",
+          "additionalProperties": false, "required": ["kind", "of", "tag"],
+          "properties": {
+            "kind": { "const": "tagged" },
+            "of": { "type": "string", "enum": ["move", "item", "ability", "species"] },
+            "tag": { "type": "string" },
+            "facet": { "type": "string" },
+            "equals": { "type": ["string", "number", "boolean"] }
+          }
+        },
+        {
+          "title": "stat",
+          "description": "Compare a stat. vs:'base' uses the species base stat; vs:'final' computes the level-50 stat from EVs/IVs/nature, then applies 'mods' multipliers (scarf, tailwind, paralysis, weather speed abilities, ...).",
+          "additionalProperties": false, "required": ["kind", "stat", "op", "value"],
+          "properties": {
+            "kind": { "const": "stat" },
+            "stat": { "$ref": "#/$defs/StatKey" },
+            "vs": { "type": "string", "enum": ["base", "final"], "default": "final" },
+            "mods": { "type": "array", "items": { "$ref": "#/$defs/StatModifier" } },
+            "op": { "$ref": "#/$defs/Op" },
+            "value": { "type": "number" }
+          }
+        },
+        {
+          "title": "outspeeds",
+          "description": "Member's effective speed beats the threat's (the threat carries its own scarf/mods). underTrickRoom flips the comparison.",
+          "additionalProperties": false, "required": ["kind", "threat"],
+          "properties": {
+            "kind": { "const": "outspeeds" },
+            "threat": { "$ref": "#/$defs/NameOrEach" },
+            "mods": { "type": "array", "items": { "$ref": "#/$defs/StatModifier" }, "description": "Modifiers applied to the MEMBER." },
+            "orSpeedTie": { "type": "boolean", "default": false, "description": "Treat a speed tie as success." },
+            "underTrickRoom": { "type": "boolean", "default": false }
+          }
+        },
+        {
+          "title": "typeEffectiveness",
+          "description": "role:'defending' = the multiplier of incoming vsType against the member's typing (resist => <= 0.5). role:'attacking' = the member's effectiveness of vsType against the target. withTera evaluates the tera typing.",
+          "additionalProperties": false, "required": ["kind", "op", "value"],
+          "properties": {
+            "kind": { "const": "typeEffectiveness" },
+            "role": { "type": "string", "enum": ["defending", "attacking"], "default": "defending" },
+            "vsType": { "$ref": "#/$defs/TypeNameOrEach" },
+            "vsThreat": { "$ref": "#/$defs/NameOrEach" },
+            "withTera": { "type": "boolean", "default": false },
+            "op": { "$ref": "#/$defs/Op" },
+            "value": { "type": "number", "minimum": 0 }
+          },
+          "anyOf": [ { "required": ["vsType"] }, { "required": ["vsThreat"] } ]
+        },
+        {
+          "title": "immuneTo",
+          "description": "Member is immune to 'effect' (a key in data/interactions.json immunities) OR to a class of move via 'moveTag' (type/ability immunity, e.g. 'ohko'). Generic: new immunity sources are added in data, not here.",
+          "additionalProperties": false, "required": ["kind"],
+          "properties": {
+            "kind": { "const": "immuneTo" },
+            "effect": { "type": "string" },
+            "moveTag": { "type": "string" },
+            "move": { "$ref": "#/$defs/Id" }
+          },
+          "anyOf": [ { "required": ["effect"] }, { "required": ["moveTag"] }, { "required": ["move"] } ]
+        },
+        {
+          "title": "canRemove",
+          "description": "Member can remove a hazard (key in data/interactions.json hazardRemoval) — e.g. grounded-poison absorbs toxic spikes, or knows a remover move.",
+          "additionalProperties": false, "required": ["kind", "hazard"],
+          "properties": { "kind": { "const": "canRemove" }, "hazard": { "type": "string" } }
+        },
+        {
+          "title": "survives",
+          "description": "Member survives the threat's hit(s) from full HP. 'case' selects across the threat's variations (worst = most damaging). roll:'max' = even the high roll leaves >0 HP (true survival).",
+          "additionalProperties": false, "required": ["kind", "threat"],
+          "properties": {
+            "kind": { "const": "survives" },
+            "threat": { "$ref": "#/$defs/NameOrEach" },
+            "case": { "type": "string", "enum": ["worst", "best", "specified"], "default": "worst" },
+            "variation": { "$ref": "#/$defs/Name" },
+            "roll": { "$ref": "#/$defs/Roll", "default": "max" },
+            "hits": { "type": "integer", "minimum": 1, "default": 1 },
+            "withTera": { "type": "boolean", "default": false }
+          }
+        },
+        {
+          "title": "koes",
+          "description": "Member's best damaging move KOs the threat in 'hits' hits (1=OHKO, 2=2HKO). roll:'min' = guaranteed (even the low roll).",
+          "additionalProperties": false, "required": ["kind", "threat"],
+          "properties": {
+            "kind": { "const": "koes" },
+            "threat": { "$ref": "#/$defs/NameOrEach" },
+            "hits": { "type": "integer", "minimum": 1, "default": 1 },
+            "roll": { "type": "string", "enum": ["min", "max"], "default": "min" },
+            "move": { "$ref": "#/$defs/Id" },
+            "withTera": { "type": "boolean", "default": false }
+          }
+        },
+        {
+          "title": "dealsDamage",
+          "description": "Member deals at least/at most a fraction of the threat's HP with a (best or named) move.",
+          "additionalProperties": false, "required": ["kind", "threat", "fraction"],
+          "properties": {
+            "kind": { "const": "dealsDamage" },
+            "threat": { "$ref": "#/$defs/NameOrEach" },
+            "move": { "$ref": "#/$defs/Id" },
+            "roll": { "$ref": "#/$defs/Roll", "default": "min" },
+            "fraction": {
+              "type": "object", "additionalProperties": false, "required": ["op", "value"],
+              "properties": { "op": { "$ref": "#/$defs/Op" }, "value": { "type": "number", "minimum": 0 } }
+            }
+          }
+        },
+        {
+          "title": "foulPlay",
+          "description": "RESERVED future atom: a flaky signal from a battle-AI (foul-play / 'blackglasses') over a toy board state. Defined now so suites referencing it validate; use severity:'info'.",
+          "additionalProperties": false, "required": ["kind", "scenario"],
+          "properties": {
+            "kind": { "const": "foulPlay" },
+            "scenario": { "type": "string" },
+            "threshold": { "type": "number" },
+            "samples": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    }
+  }
+}
