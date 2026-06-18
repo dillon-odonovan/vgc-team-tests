@@ -17,10 +17,12 @@
     "test": "node --test test/*.test.mjs",
     "validate": "node --test test/validate-examples.test.mjs",
     "lint:data": "node --test test/data-lint.test.mjs",
-    "build:types": "json2ts -i schema/team-test-suite.schema.json -o types/suite.d.ts && json2ts -i schema/team-test-report.schema.json -o types/report.d.ts"
+    "build:types": "json2ts -i schema/team-test-suite.schema.json -o types/suite.d.ts && json2ts -i schema/team-test-report.schema.json -o types/report.d.ts",
+    "run": "node src/cli.mjs"
   },
   "devDependencies": {
     "@pkmn/dex": "^0.10.10",
+    "@smogon/calc": "^0.11.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "json-schema-to-typescript": "^15.0.4"
