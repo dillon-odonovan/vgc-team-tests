@@ -210,12 +210,12 @@
     },
     {
       "id": "fissure-immunity",
-      "title": "An answer to OHKO moves (Fissure)",
+      "title": "An answer to Fissure",
       "rationale": "Flying/Levitate/Air Balloon dodge Ground-type Fissure; Sturdy/Sash block any OHKO.",
       "severity": "info",
       "assert": {
         "count": "members",
-        "where": { "kind": "immuneTo", "moveTag": "ohko" },
+        "where": { "kind": "immuneTo", "moveTag": "fissure" },
         "op": ">=",
         "value": 1
       }

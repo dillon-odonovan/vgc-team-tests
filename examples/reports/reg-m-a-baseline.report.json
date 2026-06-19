@@ -112,7 +112,7 @@
     },
     {
       "id": "fissure-immunity",
-      "title": "An answer to OHKO moves (Fissure)",
+      "title": "An answer to Fissure",
       "severity": "info",
       "pass": false,
       "actual": 0,

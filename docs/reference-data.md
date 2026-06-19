@@ -33,7 +33,7 @@ The schema deliberately holds no meta knowledge. Three data files do, and a futu
 | `{ "anyOf": [ … ] }`           | OR (also the top‑level form)                                                                                         |
 | `{ "typeImmuneToMove": true }` | member's typing is immune to the incoming move's type (per‑move `moveTag` immunities, e.g. Flying vs Ground Fissure) |
 
-Three buckets: `immunities` (named effects), `moveTagImmunities` (per‑move classes like `ohko`), `hazardRemoval` (per‑hazard).
+Three buckets: `immunities` (named effects), `moveTagImmunities` (per‑move classes like `fissure`/`horndrill`/`sheercold`, each layering the type‑agnostic `ohko` block on top of its own type‑immunity — `ohko` itself stays type‑agnostic since Sturdy/Sash block any OHKO move regardless of type), `hazardRemoval` (per‑hazard).
 
 ## `data/threats.json` — calc targets, groups, variations
 
