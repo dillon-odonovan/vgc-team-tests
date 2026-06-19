@@ -1,48 +1,31 @@
 /**
- * Evaluates the four assertion shapes (count / countDistinct / coverage / team)
- * and returns a partial Result object (id/title/severity added by engine).
+ * Evaluates the four assertion shapes (count / countDistinct / coverage /
+ * team) and returns a partial {@link Result} (id/title/severity are added
+ * by the engine afterward).
  */
-import { evalPredicate, resolveGroup } from "./eval-predicate.js";
+import { compare } from "./compare.js";
+import { evalPredicate } from "./eval-predicate.js";
+import { tryOrNull } from "./safe.js";
+import { memberTypes } from "./team-member.js";
+import { resolveGroup } from "./threats.js";
 import type {
   Assert,
   EvalContext,
+  GroupSpec,
   MemberRef,
-  Op,
   PartialResult,
   Predicate,
   TeamMember,
   ThreatSpec,
 } from "./types.js";
 
-function compare(lhs: number, op: Op, rhs: number): boolean {
-  switch (op) {
-    case ">=":
-      return lhs >= rhs;
-    case "<=":
-      return lhs <= rhs;
-    case ">":
-      return lhs > rhs;
-    case "<":
-      return lhs < rhs;
-    case "==":
-      return lhs === rhs;
-    case "!=":
-      return lhs !== rhs;
-    default:
-      throw new Error(`Unknown op: ${op}`);
-  }
-}
-
 function memberRef(m: TeamMember): MemberRef {
   return { slot: m.slot, species: m.species };
 }
 
+/** Evaluates a predicate, treating evaluator errors (e.g. an unresolved `$each`) as "doesn't match" rather than aborting the whole assertion. */
 function safeEval(pred: Predicate, m: TeamMember, ctx: EvalContext): boolean {
-  try {
-    return evalPredicate(pred, m, ctx);
-  } catch {
-    return false;
-  }
+  return tryOrNull(() => evalPredicate(pred, m, ctx)) ?? false;
 }
 
 // ---------------------------------------------------------------------------
@@ -64,45 +47,46 @@ function evalCount(
 // ---------------------------------------------------------------------------
 // countDistinct assertion
 // ---------------------------------------------------------------------------
+
+type PrimitiveValue = string | number | boolean;
+
+function isPrimitive(v: unknown): v is PrimitiveValue {
+  return (
+    typeof v === "string" || typeof v === "number" || typeof v === "boolean"
+  );
+}
+
+/** Adds `entry[facetKey]` to `values` if it's present and a primitive. */
+function addFacetValue(
+  values: Set<PrimitiveValue>,
+  entry: Record<string, unknown> | undefined,
+  facetKey: string,
+): void {
+  const v = entry?.[facetKey];
+  if (isPrimitive(v)) values.add(v);
+}
+
+/** Collects the distinct values a member contributes for a `countDistinct` attribute. */
 function getMemberAttributeValues(
   member: TeamMember,
   attribute: string,
   ctx: EvalContext,
-): Set<string | number | boolean> {
+): Set<PrimitiveValue> {
   if (attribute.startsWith("facet:")) {
     const facetKey = attribute.slice(6);
-    const values = new Set<string | number | boolean>();
-    for (const moveId of member.moves ?? []) {
-      const entry = ctx.tags.moves?.[moveId];
-      const v = entry?.[facetKey];
-      if (
-        v != null &&
-        (typeof v === "string" ||
-          typeof v === "number" ||
-          typeof v === "boolean")
-      )
-        values.add(v);
-    }
-    const itemEntry = member.item ? ctx.tags.items?.[member.item] : undefined;
-    const itemV = itemEntry?.[facetKey];
-    if (
-      itemV != null &&
-      (typeof itemV === "string" ||
-        typeof itemV === "number" ||
-        typeof itemV === "boolean")
-    )
-      values.add(itemV);
-    const abilEntry = member.ability
-      ? ctx.tags.abilities?.[member.ability]
-      : undefined;
-    const abilV = abilEntry?.[facetKey];
-    if (
-      abilV != null &&
-      (typeof abilV === "string" ||
-        typeof abilV === "number" ||
-        typeof abilV === "boolean")
-    )
-      values.add(abilV);
+    const values = new Set<PrimitiveValue>();
+    for (const moveId of member.moves ?? [])
+      addFacetValue(values, ctx.tags.moves?.[moveId], facetKey);
+    addFacetValue(
+      values,
+      member.item ? ctx.tags.items?.[member.item] : undefined,
+      facetKey,
+    );
+    addFacetValue(
+      values,
+      member.ability ? ctx.tags.abilities?.[member.ability] : undefined,
+      facetKey,
+    );
     return values;
   }
   switch (attribute) {
@@ -115,7 +99,7 @@ function getMemberAttributeValues(
     case "teraType":
       return member.teraType ? new Set([member.teraType]) : new Set();
     case "type":
-      return new Set((member._types ?? []).map((t) => t.toLowerCase()));
+      return new Set(memberTypes(member));
     case "move":
       return new Set(member.moves ?? []);
     default:
@@ -131,7 +115,7 @@ function evalCountDistinct(
   const { countDistinct, where, op, value } = assert;
   const qualified = where ? team.filter((m) => safeEval(where, m, ctx)) : team;
 
-  const distinctValues = new Set<string | number | boolean>();
+  const distinctValues = new Set<PrimitiveValue>();
   for (const m of qualified) {
     for (const v of getMemberAttributeValues(m, countDistinct, ctx)) {
       distinctValues.add(v);
@@ -155,29 +139,32 @@ function evalCountDistinct(
 // ---------------------------------------------------------------------------
 
 interface GroupElements {
+  /** The element ids/species/types to check coverage for. */
   elements: string[];
+  /** For `threats` groups: the original (possibly inline-object) members, used to bind `$each`. */
   rawMembers?: (string | ThreatSpec)[];
+  /** Set for `meta` groups, which need a live usage-stats resolver we don't have yet. */
   notImplemented?: boolean;
 }
 
-function groupElements(
-  groupSpec: ReturnType<typeof resolveGroup>,
-): GroupElements {
+/** Normalizes any {@link GroupSpec} kind into a flat list of coverage elements. */
+function groupElements(groupSpec: GroupSpec | null): GroupElements {
   if (!groupSpec) return { elements: [] };
 
-  if (groupSpec.kind === "values") return { elements: groupSpec.members ?? [] };
-  if (groupSpec.kind === "species")
-    return { elements: groupSpec.members ?? [] };
-  if (groupSpec.kind === "threats") {
-    return {
-      elements: (groupSpec.members ?? []).map((m) =>
-        typeof m === "string" ? m : m.species,
-      ),
-      rawMembers: groupSpec.members ?? [],
-    };
+  switch (groupSpec.kind) {
+    case "values":
+    case "species":
+      return { elements: groupSpec.members ?? [] };
+    case "threats": {
+      const members = groupSpec.members ?? [];
+      return {
+        elements: members.map((m) => (typeof m === "string" ? m : m.species)),
+        rawMembers: members,
+      };
+    }
+    case "meta":
+      return { elements: [], notImplemented: true };
   }
-  // kind === 'meta': requires usage data — not implemented.
-  return { elements: [], notImplemented: true };
 }
 
 function evalCoverage(
@@ -250,7 +237,11 @@ function evalCoverage(
 // team assertion
 // ---------------------------------------------------------------------------
 
-// In team scope each leaf atom is existential (any member satisfies it).
+/**
+ * Evaluates a predicate in "team scope": each leaf atom means "some member
+ * satisfies it" (existential), so `all`/`any`/`not`/`atLeastK` combine
+ * *different* existential requirements rather than testing one member.
+ */
 function evalTeamPredicate(
   pred: Predicate,
   team: TeamMember[],
@@ -291,6 +282,15 @@ function evalTeam(
 // Dispatch
 // ---------------------------------------------------------------------------
 
+/**
+ * Evaluates one test's assertion against the whole team, dispatching to the
+ * matching shape (`count` / `countDistinct` / `coverage` / `team`).
+ *
+ * @param assert - The assertion to evaluate (a {@link Test}'s `assert` field).
+ * @param team - The full (dex-enriched) team.
+ * @param ctx - Evaluation context shared across all tests in the suite run.
+ * @returns A partial result; the engine fills in `id`/`title`/`severity`.
+ */
 export function evalAssertion(
   assert: Assert,
   team: TeamMember[],

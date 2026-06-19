@@ -12,14 +12,28 @@
  *   { typeImmuneToMove: true } member's typing is immune to opts.moveType
  *   { weather: name }         battle weather (not checkable without state → false)
  */
+import { memberTypes } from "./team-member.js";
 import type { SourceNode, TeamMember } from "./types.js";
 
+/** Options threaded through {@link evalSource} for the `typeImmuneToMove` node. */
 export interface EvalSourceOpts {
+  /** Type-effectiveness function, injected to avoid a hard dependency on type-chart.ts. */
   typeEffectiveness?: (type: string, defenderTypes: string[]) => number;
   /** The type to use for typeImmuneToMove checks (e.g. 'ground' for Fissure / ohko). */
   moveType?: string | null;
 }
 
+/**
+ * Evaluates one node of the `data/interactions.json` source-predicate
+ * grammar against a team member. Used by the `immuneTo` and `canRemove`
+ * atoms, which look up a named effect/hazard in the reference data and
+ * pass its source node here.
+ *
+ * @param node - The source node (see the module doc comment for shapes).
+ *   `undefined` (an unknown effect/hazard name) evaluates to `false`.
+ * @param member - The team member to test.
+ * @param opts - Extra context needed only by the `typeImmuneToMove` node.
+ */
 export function evalSource(
   node: SourceNode | undefined,
   member: TeamMember,
@@ -31,7 +45,7 @@ export function evalSource(
   if (node.all) return node.all.every((n) => evalSource(n, member, opts));
 
   if (node.type != null) {
-    const mTypes = (member._types ?? []).map((t) => t.toLowerCase());
+    const mTypes = memberTypes(member);
     const required = ([] as string[])
       .concat(node.type)
       .map((t) => t.toLowerCase());
@@ -52,7 +66,7 @@ export function evalSource(
   }
 
   if (node.grounded != null) {
-    const types = (member._types ?? []).map((t) => t.toLowerCase());
+    const types = memberTypes(member);
     const flying = types.includes("flying");
     const levitate = member.ability === "levitate";
     const airBalloon = member.item === "airballoon";

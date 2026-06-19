@@ -1,18 +1,16 @@
 /**
- * Orchestrator: given a suite (object) and a team paste (string), evaluate all
- * tests and return a VGCTeamTestReport object.
- *
- * Usage:
- *   import {runSuite} from './engine.js';
- *   const report = await runSuite(suite, teamPasteText);
+ * Orchestrator: given a suite and a team paste, evaluates every test and
+ * returns a `VGCTeamTestReport`-shaped object. This is the main entry point
+ * for embedding the engine in other code — see {@link runSuite}.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 
 import { gen9 } from "./dex.js";
-import { parseShowdownPaste } from "./parse-team.js";
 import { evalAssertion } from "./eval-assertion.js";
+import { parseShowdownPaste } from "./parse-team.js";
+import { enrichTeam } from "./team-member.js";
 import type {
   EvalContext,
   InteractionsData,
@@ -31,6 +29,7 @@ function loadJSON<T>(rel: string): T {
   return JSON.parse(readFileSync(join(root, rel), "utf8")) as T;
 }
 
+/** Tallies pass/fail counts per severity for the report's `summary` field. */
 function buildSummary(
   results: Result[],
 ): Partial<Record<"error" | "warn" | "info", Tally>> {
@@ -45,21 +44,13 @@ function buildSummary(
   return summary;
 }
 
+/** Drops `undefined`-valued optional fields so the emitted JSON only has keys that are actually set. */
 function cleanResult(r: Result): Result {
-  const out: Result = { id: r.id, pass: r.pass };
-  if (r.title != null) out.title = r.title;
-  if (r.severity != null) out.severity = r.severity;
-  if (r.weight != null) out.weight = r.weight;
-  if (r.actual != null) out.actual = r.actual;
-  if (r.op != null) out.op = r.op;
-  if (r.value != null) out.value = r.value;
-  if (r.satisfiedBy !== undefined) out.satisfiedBy = r.satisfiedBy;
-  if (r.coverage != null) out.coverage = r.coverage;
-  if (r.message != null) out.message = r.message;
-  if (r.detail != null) out.detail = r.detail;
-  return out;
+  const entries = Object.entries(r).filter(([, v]) => v !== undefined);
+  return Object.fromEntries(entries) as unknown as Result;
 }
 
+/** Optional overrides for the reference data the engine would otherwise load from `data/*.json` — mainly for tests. */
 export interface RunSuiteOpts {
   tags?: TagsData;
   interactions?: InteractionsData;
@@ -67,11 +58,16 @@ export interface RunSuiteOpts {
 }
 
 /**
- * Run a suite against a team.
+ * Runs every test in a suite against a team.
  *
- * @param suite     - Parsed suite JSON (VGCTeamTestSuite)
- * @param teamText  - Showdown/pokepaste paste text
- * @param opts      - Override data sources for testing
+ * @param suite - A parsed suite document (a `VGCTeamTestSuite`).
+ * @param teamText - Showdown/pokepaste paste text for the team under test.
+ * @param opts - Overrides for the reference data sources; defaults to
+ *   loading `data/tags.json`, `data/interactions.json`, and
+ *   `data/threats.json` from the package root.
+ * @returns The completed report: per-test results, severity summary, and
+ *   an overall `passed` flag (true iff every `error`-severity test passed).
+ * @throws If the team paste contains no Pokémon.
  */
 export async function runSuite(
   suite: Suite,
@@ -87,12 +83,7 @@ export async function runSuite(
   const threatsLib =
     opts.threatsLib ?? loadJSON<ThreatsLib>("data/threats.json");
 
-  // Enrich team members with types from dex
-  for (const m of team) {
-    const sd = gen9.species.get(m.species);
-    m._types = sd?.exists ? [...sd.types] : [];
-    m._baseStats = sd?.exists ? { ...sd.baseStats } : undefined;
-  }
+  enrichTeam(team, gen9);
 
   const ctx: EvalContext = {
     suite,
@@ -137,7 +128,13 @@ export async function runSuite(
   };
 }
 
-/** Run a subset of tests (by id) from a suite. */
+/**
+ * Runs only the named subset of a suite's tests against a team — the
+ * `--tests` CLI flag's underlying implementation.
+ *
+ * @param testIds - Test ids to run; must match at least one test.
+ * @throws If no test in `suite` matches any id in `testIds`.
+ */
 export async function runTests(
   suite: Suite,
   teamText: string,

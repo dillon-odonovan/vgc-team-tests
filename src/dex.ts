@@ -9,8 +9,14 @@
 import { Dex } from "@pkmn/dex";
 import { Generations } from "@smogon/calc";
 
+/** @pkmn/dex's gen 9 data: species/move/item/ability lookups for non-calc atoms. */
 export const gen9 = Dex.forGen(9);
+
+/** @smogon/calc's own gen 9 data: used when constructing `Pokemon`/`Move`/`Field` for damage calcs. */
 export const calcGen9 = Generations.get(9);
 
+/** The type of {@link gen9}, for typing functions that take a dex generation. */
 export type Gen9 = typeof gen9;
+
+/** The type of {@link calcGen9}. */
 export type CalcGen9 = typeof calcGen9;

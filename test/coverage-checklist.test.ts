@@ -10,10 +10,14 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const root = resolve(here, "..");
-const readJSON = (p) => JSON.parse(readFileSync(p, "utf8"));
-const walkJSON = (dir) =>
-  readdirSync(dir).flatMap((e) => {
+const root = resolve(here, "..", "..");
+
+function readJSON<T = unknown>(p: string): T {
+  return JSON.parse(readFileSync(p, "utf8")) as T;
+}
+
+function walkJSON(dir: string): string[] {
+  return readdirSync(dir).flatMap((e) => {
     const p = join(dir, e);
     return statSync(p).isDirectory()
       ? walkJSON(p)
@@ -21,30 +25,53 @@ const walkJSON = (dir) =>
         ? [p]
         : [];
   });
+}
 
-const schema = readJSON(join(root, "schema/team-test-suite.schema.json"));
+interface SchemaDoc {
+  $defs: {
+    Predicate: {
+      oneOf: Array<{ properties?: { kind?: { const?: string } } }>;
+    };
+  };
+}
+
+interface ExampleSuite {
+  tests?: Array<{ assert?: Record<string, unknown> }>;
+}
+
+const schema = readJSON<SchemaDoc>(
+  join(root, "schema/team-test-suite.schema.json"),
+);
 const expectedKinds = new Set(
   schema.$defs.Predicate.oneOf
     .map((b) => b.properties?.kind?.const)
-    .filter(Boolean),
+    .filter((k): k is string => Boolean(k)),
 );
 const expectedShapes = new Set(["count", "countDistinct", "coverage", "team"]);
 
-const seenKinds = new Set();
-const seenShapes = new Set();
-const collect = (node) => {
-  if (Array.isArray(node)) return node.forEach(collect);
+const seenKinds = new Set<string>();
+const seenShapes = new Set<string>();
+
+function collect(node: unknown): void {
+  if (Array.isArray(node)) {
+    node.forEach(collect);
+    return;
+  }
   if (!node || typeof node !== "object") return;
-  if (typeof node.kind === "string") seenKinds.add(node.kind);
-  for (const v of Object.values(node)) collect(v);
-};
+  const obj = node as Record<string, unknown>;
+  if (typeof obj.kind === "string") seenKinds.add(obj.kind);
+  for (const v of Object.values(obj)) collect(v);
+}
+
 for (const file of walkJSON(join(root, "examples"))) {
   if (file.endsWith(".report.json")) continue;
-  const suite = readJSON(file);
+  const suite = readJSON<ExampleSuite>(file);
   collect(suite);
-  for (const t of suite.tests ?? [])
-    for (const s of expectedShapes)
+  for (const t of suite.tests ?? []) {
+    for (const s of expectedShapes) {
       if (s in (t.assert ?? {})) seenShapes.add(s);
+    }
+  }
 }
 
 test("every atom kind in the schema is exercised by an example", () => {

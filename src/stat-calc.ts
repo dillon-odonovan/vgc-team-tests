@@ -1,69 +1,20 @@
 /**
- * Level-50 stat formula and nature/modifier lookup.
+ * Domain-specific stat math that @smogon/calc doesn't provide: named stat
+ * modifiers (scarf/tailwind/paralysis/etc.) and EV/IV default spreads.
+ *
+ * The level-50 EV/IV/nature stat formula itself is *not* reimplemented here
+ * — @smogon/calc's `Pokemon.stats` already computes it, so the `stat` and
+ * `outspeeds` atoms in eval-predicate.ts build a `Pokemon` and read its
+ * `.stats` rather than going through a hand-rolled formula.
  */
-import type { StatKey, StatModifier } from "./types.js";
-
-// [+stat, -stat] for each nature; neutral natures have an empty entry.
-const NATURES: Record<string, [StatKey, StatKey] | []> = {
-  hardy: [],
-  docile: [],
-  serious: [],
-  bashful: [],
-  quirky: [],
-  lonely: ["atk", "def"],
-  brave: ["atk", "spe"],
-  adamant: ["atk", "spa"],
-  naughty: ["atk", "spd"],
-  bold: ["def", "atk"],
-  relaxed: ["def", "spe"],
-  impish: ["def", "spa"],
-  lax: ["def", "spd"],
-  timid: ["spe", "atk"],
-  hasty: ["spe", "def"],
-  jolly: ["spe", "spa"],
-  naive: ["spe", "spd"],
-  modest: ["spa", "atk"],
-  mild: ["spa", "def"],
-  quiet: ["spa", "spe"],
-  rash: ["spa", "spd"],
-  calm: ["spd", "atk"],
-  gentle: ["spd", "def"],
-  sassy: ["spd", "spe"],
-  careful: ["spd", "spa"],
-};
-
-export function natureModifier(
-  nature: string | undefined,
-  stat: StatKey,
-): number {
-  const mods = NATURES[nature?.toLowerCase() ?? ""] ?? [];
-  if (mods[0] === stat) return 1.1;
-  if (mods[1] === stat) return 0.9;
-  return 1.0;
-}
-
-/** Compute the level-50 stat value. */
-export function calcStat(
-  stat: StatKey,
-  base: number,
-  ev = 0,
-  iv = 31,
-  nature = "hardy",
-  level = 50,
-): number {
-  const inner = Math.floor(
-    ((2 * base + iv + Math.floor(ev / 4)) * level) / 100,
-  );
-  if (stat === "hp") return inner + level + 10;
-  return Math.floor((inner + 5) * natureModifier(nature, stat));
-}
+import type { EvSpread, StatKey, StatModifier } from "./types.js";
 
 interface StatMod {
   stat: StatKey;
   mult: number;
 }
 
-// Multipliers applied on top of the computed stat value.
+// Multipliers applied on top of a Pokemon's computed stat value.
 const MODS: Record<StatModifier, StatMod> = {
   scarf: { stat: "spe", mult: 1.5 },
   tailwind: { stat: "spe", mult: 2 },
@@ -82,6 +33,11 @@ const MODS: Record<StatModifier, StatMod> = {
   grass_pelt: { stat: "def", mult: 1.5 },
 };
 
+/**
+ * Applies any `mods` whose target stat matches `stat` as successive
+ * multipliers (each rounded down), e.g. Choice Scarf's `×1.5` on Speed.
+ * Mods targeting a different stat are ignored.
+ */
 export function applyMods(
   value: number,
   stat: StatKey,
@@ -93,4 +49,14 @@ export function applyMods(
     if (def?.stat === stat) v = Math.floor(v * def.mult);
   }
   return v;
+}
+
+/** A fresh all-zero EV spread (the `set: 'usage'` fallback when no spread is given). */
+export function zeroEvs(): Required<EvSpread> {
+  return { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+}
+
+/** A fresh all-31 IV spread (the default for both parsed teams and `set: 'usage'` threats). */
+export function maxIvs(): Required<EvSpread> {
+  return { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
 }

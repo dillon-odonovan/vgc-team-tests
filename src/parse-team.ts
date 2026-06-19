@@ -1,8 +1,16 @@
 /**
- * Parse a Showdown/pokepaste text block into an array of team member objects.
+ * Parses a Showdown/pokepaste text block into an array of team member
+ * objects. This is the only entry point most callers need — see
+ * {@link parseShowdownPaste}.
  */
+import { maxIvs, zeroEvs } from "./stat-calc.js";
 import type { EvSpread, TeamMember } from "./types.js";
 
+/**
+ * Converts a display name to a canonical Showdown id: lowercase,
+ * alphanumerics only (e.g. `'Landorus-Therian'` -> `'landorustherian'`,
+ * `'Freeze-Dry'` -> `'freezedry'`).
+ */
 export function toID(str: string): string {
   return String(str)
     .toLowerCase()
@@ -67,13 +75,6 @@ function parseHeader(line: string): ParsedHeader {
   return { species, nickname, item, gender };
 }
 
-function defaultEvs(): Required<EvSpread> {
-  return { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
-}
-function defaultIvs(): Required<EvSpread> {
-  return { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
-}
-
 function parseBlock(lines: string[], slot: number): TeamMember | null {
   if (!lines.length || !lines[0].trim()) return null;
 
@@ -91,8 +92,8 @@ function parseBlock(lines: string[], slot: number): TeamMember | null {
     shiny: false,
     teraType: null,
     nature: null,
-    evs: defaultEvs(),
-    ivs: defaultIvs(),
+    evs: zeroEvs(),
+    ivs: maxIvs(),
     moves: [],
   };
 
@@ -127,6 +128,21 @@ function parseBlock(lines: string[], slot: number): TeamMember | null {
   return member;
 }
 
+/**
+ * Parses a Showdown/pokepaste team export into team member objects.
+ * Members are separated by blank lines; each block's first line is the
+ * `Nickname (Species) (Gender) @ Item` header, followed by `Ability:`,
+ * `Level:`, `Tera Type:`, `Shiny:`, `EVs:`, `IVs:`, a `<Nature> Nature`
+ * line, and `- Move` lines in any order. Unrecognized lines (Happiness,
+ * Dynamax Level, etc.) are ignored.
+ *
+ * Note: this only parses the team — it does not enrich members with dex
+ * data (types/base stats). Call {@link enrichTeam} after parsing if the
+ * caller needs those (the engine does this automatically).
+ *
+ * @param text - The raw paste text.
+ * @returns One {@link TeamMember} per non-empty block, in paste order.
+ */
 export function parseShowdownPaste(text: string): TeamMember[] {
   const blocks = text.trim().split(/\n[ \t]*\n+/);
   const members: TeamMember[] = [];

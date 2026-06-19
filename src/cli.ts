@@ -21,6 +21,8 @@ interface Args {
 // ---------------------------------------------------------------------------
 // Arg parsing (no deps — keep it simple)
 // ---------------------------------------------------------------------------
+
+/** Parses `--flag value` / `--flag` style args; unrecognized flags are ignored. */
 function parseArgs(argv: string[]): Args {
   const args: Args = {};
   for (let i = 0; i < argv.length; i++) {
@@ -49,11 +51,13 @@ function parseArgs(argv: string[]): Args {
   return args;
 }
 
+/** Prints an error to stderr and exits with code 1. */
 function die(msg: string): never {
   process.stderr.write(`error: ${msg}\n`);
   process.exit(1);
 }
 
+/** Prints `--help` usage text to stdout. */
 function usage(): void {
   process.stdout.write(
     `
@@ -77,6 +81,8 @@ Examples:
 // ---------------------------------------------------------------------------
 // Read stdin (for piped team text)
 // ---------------------------------------------------------------------------
+
+/** Buffers all of stdin and resolves with it as a UTF-8 string, used when `--team` is omitted. */
 async function readStdin(): Promise<string> {
   return new Promise((resolve) => {
     const chunks: Buffer[] = [];
@@ -93,6 +99,10 @@ async function readStdin(): Promise<string> {
 // ---------------------------------------------------------------------------
 // Pretty-print summary to stderr
 // ---------------------------------------------------------------------------
+
+const EMPTY_TALLY = { passed: 0, failed: 0 };
+
+/** Prints a colorized pass/fail summary of `report` to stderr (the `--pretty` output). */
 function printSummary(report: Report): void {
   const PASS = "\x1b[32m✓\x1b[0m";
   const FAIL = "\x1b[31m✗\x1b[0m";
@@ -125,9 +135,9 @@ function printSummary(report: Report): void {
   }
 
   const { summary } = report;
-  const e = summary?.error ?? { passed: 0, failed: 0 };
-  const w = summary?.warn ?? { passed: 0, failed: 0 };
-  const i = summary?.info ?? { passed: 0, failed: 0 };
+  const e = summary?.error ?? EMPTY_TALLY;
+  const w = summary?.warn ?? EMPTY_TALLY;
+  const i = summary?.info ?? EMPTY_TALLY;
 
   process.stderr.write(`\nErrors: ${e.passed}/${e.passed + e.failed} passed`);
   process.stderr.write(`  Warns: ${w.passed}/${w.passed + w.failed} passed`);
@@ -140,6 +150,8 @@ function printSummary(report: Report): void {
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
+
+/** Parses args, loads the suite/team, runs the engine, and exits 0/1 on pass/fail. */
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
 

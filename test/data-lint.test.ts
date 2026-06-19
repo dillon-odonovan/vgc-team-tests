@@ -13,8 +13,12 @@ import { dirname, join, resolve } from "node:path";
 import { Dex } from "@pkmn/dex";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const root = resolve(here, "..");
-const readJSON = (p) => JSON.parse(readFileSync(p, "utf8"));
+const root = resolve(here, "..", "..");
+
+function readJSON<T = unknown>(p: string): T {
+  return JSON.parse(readFileSync(p, "utf8")) as T;
+}
+
 const gen = Dex.forGen(9);
 
 const TYPES = new Set([
@@ -39,7 +43,9 @@ const TYPES = new Set([
 ]);
 const TERA = new Set([...TYPES, "stellar"]);
 
-const exists = {
+type ExistsKind = "species" | "move" | "item" | "ability" | "type" | "tera";
+
+const exists: Record<ExistsKind, (id: string) => boolean> = {
   species: (id) => gen.species.get(id)?.exists === true,
   move: (id) => gen.moves.get(id)?.exists === true,
   item: (id) => gen.items.get(id)?.exists === true,
@@ -48,8 +54,8 @@ const exists = {
   tera: (id) => TERA.has(id),
 };
 
-const walkJSON = (dir) =>
-  readdirSync(dir).flatMap((e) => {
+function walkJSON(dir: string): string[] {
+  return readdirSync(dir).flatMap((e) => {
     const p = join(dir, e);
     return statSync(p).isDirectory()
       ? walkJSON(p)
@@ -57,25 +63,29 @@ const walkJSON = (dir) =>
         ? [p]
         : [];
   });
+}
 
-const strs = (v) =>
-  (Array.isArray(v) ? v : v == null ? [] : [v]).filter(
-    (x) => typeof x === "string",
-  );
+function strs(v: unknown): string[] {
+  const arr = Array.isArray(v) ? v : v == null ? [] : [v];
+  return arr.filter((x): x is string => typeof x === "string");
+}
 
 // ---------------------------------------------------------------------------
 // (1) Reference-data id sanity
 // ---------------------------------------------------------------------------
 test("data/tags.json keys are real Showdown ids", () => {
-  const tags = readJSON(join(root, "data/tags.json"));
-  const bad = [];
+  const tags = readJSON<Record<string, Record<string, unknown>>>(
+    join(root, "data/tags.json"),
+  );
+  const bad: string[] = [];
+  const catToKind: Record<string, ExistsKind> = {
+    moves: "move",
+    items: "item",
+    abilities: "ability",
+    species: "species",
+  };
   for (const cat of ["moves", "items", "abilities", "species"]) {
-    const kind = {
-      moves: "move",
-      items: "item",
-      abilities: "ability",
-      species: "species",
-    }[cat];
+    const kind = catToKind[cat];
     for (const id of Object.keys(tags[cat] ?? {}))
       if (!exists[kind](id)) bad.push(`${cat}.${id}`);
   }
@@ -84,19 +94,23 @@ test("data/tags.json keys are real Showdown ids", () => {
 
 test("data/interactions.json references real ids", () => {
   const data = readJSON(join(root, "data/interactions.json"));
-  const bad = [];
-  const walk = (node) => {
-    if (Array.isArray(node)) return node.forEach(walk);
+  const bad: string[] = [];
+  const walk = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
+    }
     if (node && typeof node === "object") {
-      for (const id of strs(node.ability))
+      const obj = node as Record<string, unknown>;
+      for (const id of strs(obj.ability))
         if (!exists.ability(id)) bad.push(`ability:${id}`);
-      for (const id of strs(node.item))
+      for (const id of strs(obj.item))
         if (!exists.item(id)) bad.push(`item:${id}`);
-      for (const id of strs(node.move))
+      for (const id of strs(obj.move))
         if (!exists.move(id)) bad.push(`move:${id}`);
-      for (const id of strs(node.type))
+      for (const id of strs(obj.type))
         if (!exists.type(id)) bad.push(`type:${id}`);
-      for (const v of Object.values(node)) walk(v);
+      for (const v of Object.values(obj)) walk(v);
     }
   };
   walk(data);
@@ -107,7 +121,16 @@ test("data/interactions.json references real ids", () => {
   );
 });
 
-function checkThreatIds(t, ctx, bad) {
+interface ThreatLike {
+  species?: unknown;
+  move?: unknown;
+  item?: unknown;
+  ability?: unknown;
+  teraType?: unknown;
+  variations?: unknown[];
+}
+
+function checkThreatIds(t: ThreatLike, ctx: string, bad: string[]): void {
   for (const id of strs(t.species))
     if (!exists.species(id)) bad.push(`${ctx}.species:${id}`);
   for (const id of strs(t.move))
@@ -118,37 +141,52 @@ function checkThreatIds(t, ctx, bad) {
     if (!exists.ability(id)) bad.push(`${ctx}.ability:${id}`);
   for (const id of strs(t.teraType))
     if (!exists.tera(id)) bad.push(`${ctx}.teraType:${id}`);
-  for (const v of t.variations ?? [])
-    if (typeof v === "object") {
-      for (const id of strs(v.item))
+  for (const v of t.variations ?? []) {
+    if (v && typeof v === "object") {
+      const vo = v as Record<string, unknown>;
+      for (const id of strs(vo.item))
         if (!exists.item(id)) bad.push(`${ctx}.var.item:${id}`);
-      for (const id of strs(v.ability))
+      for (const id of strs(vo.ability))
         if (!exists.ability(id)) bad.push(`${ctx}.var.ability:${id}`);
     }
+  }
 }
 
-function checkGroupIds(g, ctx, bad) {
-  if (g.kind === "species")
-    for (const id of g.members ?? [])
+interface GroupLike {
+  kind?: string;
+  members?: unknown[];
+  valueType?: string;
+  move?: unknown;
+}
+
+function checkGroupIds(g: GroupLike, ctx: string, bad: string[]): void {
+  if (g.kind === "species") {
+    for (const id of strs(g.members))
       if (!exists.species(id)) bad.push(`${ctx}:${id}`);
-      else if (g.kind === "values") {
-        const k = g.valueType === "type" ? "type" : g.valueType; // species/move/item/ability/type
-        for (const id of g.members ?? [])
-          if (exists[k] && !exists[k](id))
-            bad.push(`${ctx}(${g.valueType}):${id}`);
-      } else if (g.kind === "threats") {
-        for (const m of g.members ?? [])
-          if (typeof m === "object") checkThreatIds(m, `${ctx}.inline`, bad);
-      } else if (g.kind === "meta") {
-        for (const id of strs(g.move))
-          if (id !== "bestDamaging" && id !== "bestStab" && !exists.move(id))
-            bad.push(`${ctx}.move:${id}`);
-      }
+  } else if (g.kind === "values") {
+    const k = (g.valueType === "type" ? "type" : g.valueType) as
+      | ExistsKind
+      | undefined; // species/move/item/ability/type
+    for (const id of strs(g.members))
+      if (k && exists[k] && !exists[k](id))
+        bad.push(`${ctx}(${g.valueType}):${id}`);
+  } else if (g.kind === "threats") {
+    for (const m of g.members ?? [])
+      if (m && typeof m === "object")
+        checkThreatIds(m as ThreatLike, `${ctx}.inline`, bad);
+  } else if (g.kind === "meta") {
+    for (const id of strs(g.move))
+      if (id !== "bestDamaging" && id !== "bestStab" && !exists.move(id))
+        bad.push(`${ctx}.move:${id}`);
+  }
 }
 
 test("data/threats.json references real ids", () => {
-  const lib = readJSON(join(root, "data/threats.json"));
-  const bad = [];
+  const lib = readJSON<{
+    threats?: Record<string, ThreatLike>;
+    groups?: Record<string, GroupLike>;
+  }>(join(root, "data/threats.json"));
+  const bad: string[] = [];
   for (const [k, t] of Object.entries(lib.threats ?? {}))
     checkThreatIds(t, `threats.${k}`, bad);
   for (const [k, g] of Object.entries(lib.groups ?? {}))
@@ -159,22 +197,29 @@ test("data/threats.json references real ids", () => {
 // ---------------------------------------------------------------------------
 // (2) Closed-vocab + dangling-ref checks across example suites
 // ---------------------------------------------------------------------------
-const tagsData = readJSON(join(root, "data/tags.json"));
-const interactions = readJSON(join(root, "data/interactions.json"));
+const tagsData = readJSON<
+  Record<string, Record<string, { tags?: string[]; [k: string]: unknown }>>
+>(join(root, "data/tags.json"));
+const interactions = readJSON<{
+  immunities?: Record<string, unknown>;
+  moveTagImmunities?: Record<string, unknown>;
+  hazardRemoval?: Record<string, unknown>;
+}>(join(root, "data/interactions.json"));
 
-const categoryTags = {
+type TagCategory = "move" | "item" | "ability" | "species";
+const categoryTags: Record<TagCategory, Set<string>> = {
   move: new Set(),
   item: new Set(),
   ability: new Set(),
   species: new Set(),
 };
-const facetKeys = new Set();
+const facetKeys = new Set<string>();
 for (const [cat, kind] of [
   ["moves", "move"],
   ["items", "item"],
   ["abilities", "ability"],
   ["species", "species"],
-]) {
+] as [string, TagCategory][]) {
   for (const entry of Object.values(tagsData[cat] ?? {})) {
     for (const t of entry.tags ?? []) categoryTags[kind].add(t);
     for (const key of Object.keys(entry))
@@ -185,54 +230,81 @@ const effectKeys = new Set(Object.keys(interactions.immunities ?? {}));
 const moveTagKeys = new Set(Object.keys(interactions.moveTagImmunities ?? {}));
 const hazardKeys = new Set(Object.keys(interactions.hazardRemoval ?? {}));
 
-// Visit every object node, dispatching by atom `kind` and by reference key.
-function collect(node, acc) {
-  if (Array.isArray(node)) return node.forEach((n) => collect(n, acc));
-  if (!node || typeof node !== "object") return;
+interface Acc {
+  tagged: Array<{ of: TagCategory; tag: string }>;
+  immune: Array<{ effect?: string; moveTag?: string }>;
+  hazard: Array<{ hazard: string }>;
+  ids: Array<[ExistsKind, string]>;
+  groupRefs: string[];
+  predRefs: string[];
+  threatRefs: string[];
+  facets: string[];
+}
 
-  if (node.kind === "tagged") acc.tagged.push(node);
-  if (node.kind === "immuneTo") acc.immune.push(node);
-  if (node.kind === "canRemove") acc.hazard.push(node);
-  if (node.kind === "species")
-    for (const id of [...strs(node.is), ...strs(node.in)])
+// Visit every object node, dispatching by atom `kind` and by reference key.
+function collect(node: unknown, acc: Acc): void {
+  if (Array.isArray(node)) {
+    node.forEach((n) => collect(n, acc));
+    return;
+  }
+  if (!node || typeof node !== "object") return;
+  const obj = node as Record<string, unknown>;
+
+  if (obj.kind === "tagged")
+    acc.tagged.push(obj as unknown as { of: TagCategory; tag: string });
+  if (obj.kind === "immuneTo")
+    acc.immune.push(obj as { effect?: string; moveTag?: string });
+  if (obj.kind === "canRemove")
+    acc.hazard.push(obj as unknown as { hazard: string });
+  if (obj.kind === "species")
+    for (const id of [...strs(obj.is), ...strs(obj.in)])
       acc.ids.push(["species", id]);
-  if (node.kind === "ability")
-    for (const id of [...strs(node.is), ...strs(node.in)])
+  if (obj.kind === "ability")
+    for (const id of [...strs(obj.is), ...strs(obj.in)])
       acc.ids.push(["ability", id]);
-  if (node.kind === "item")
-    for (const id of [...strs(node.is), ...strs(node.in)])
+  if (obj.kind === "item")
+    for (const id of [...strs(obj.is), ...strs(obj.in)])
       acc.ids.push(["item", id]);
-  if (node.kind === "move")
+  if (obj.kind === "move")
     for (const id of [
-      ...strs(node.has),
-      ...strs(node.hasAny),
-      ...strs(node.hasAll),
+      ...strs(obj.has),
+      ...strs(obj.hasAny),
+      ...strs(obj.hasAll),
     ])
       acc.ids.push(["move", id]);
 
-  if (typeof node.group === "string") acc.groupRefs.push(node.group);
-  if (typeof node.predicate === "string") acc.predRefs.push(node.predicate);
-  if (typeof node.threat === "string" && node.threat !== "$each")
-    acc.threatRefs.push(node.threat);
+  if (typeof obj.group === "string") acc.groupRefs.push(obj.group);
+  if (typeof obj.predicate === "string") acc.predRefs.push(obj.predicate);
+  if (typeof obj.threat === "string" && obj.threat !== "$each")
+    acc.threatRefs.push(obj.threat);
   if (
-    typeof node.countDistinct === "string" &&
-    node.countDistinct.startsWith("facet:")
-  )
-    acc.facets.push(node.countDistinct.slice(6));
+    typeof obj.countDistinct === "string" &&
+    obj.countDistinct.startsWith("facet:")
+  ) {
+    acc.facets.push(obj.countDistinct.slice(6));
+  }
 
-  for (const v of Object.values(node)) collect(v, acc);
+  for (const v of Object.values(obj)) collect(v, acc);
+}
+
+interface SuiteLike {
+  definitions?: {
+    threats?: Record<string, ThreatLike>;
+    groups?: Record<string, GroupLike>;
+    predicates?: Record<string, unknown>;
+  };
 }
 
 for (const file of walkJSON(join(root, "examples"))) {
   if (file.endsWith(".report.json")) continue;
   const rel = file.slice(root.length + 1);
   test(`refs resolve: ${rel}`, () => {
-    const suite = readJSON(file);
+    const suite = readJSON<SuiteLike>(file);
     const defThreats = new Set(Object.keys(suite.definitions?.threats ?? {}));
     const defGroups = new Set(Object.keys(suite.definitions?.groups ?? {}));
     const defPreds = new Set(Object.keys(suite.definitions?.predicates ?? {}));
 
-    const acc = {
+    const acc: Acc = {
       tagged: [],
       immune: [],
       hazard: [],
@@ -244,7 +316,7 @@ for (const file of walkJSON(join(root, "examples"))) {
     };
     collect(suite, acc);
 
-    const errs = [];
+    const errs: string[] = [];
     for (const t of acc.tagged)
       if (!categoryTags[t.of]?.has(t.tag))
         errs.push(`tagged ${t.of}:'${t.tag}' not in tags.json`);

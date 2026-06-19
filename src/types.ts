@@ -120,7 +120,7 @@ export interface MetaThreatsGroup {
 export interface ValuesGroup {
   kind: "values";
   description?: string;
-  valueType: "type" | "move" | "item" | "ability" | "species";
+  valueType: TaggableKind | "type";
   members: string[];
 }
 export type GroupSpec =
@@ -133,43 +133,45 @@ export type GroupSpec =
 // Predicates
 // ---------------------------------------------------------------------------
 
-export interface AllPredicate {
-  kind: "all";
+// The JSON Schema repeats the shapes below once per `oneOf` branch (it has
+// no generics, so `$ref`-ing a shared subschema can't override `kind`'s
+// `const`). TypeScript can parametrize on the discriminant directly, so the
+// handful of atoms/composites that are otherwise identical are expressed as
+// instances of a shared generic instead of being hand-copied.
+
+/** Boolean composite over a list of sub-predicates, e.g. `all`/`any`. */
+interface OfListPredicate<K extends string> {
+  kind: K;
   of: Predicate[];
 }
-export interface AnyPredicate {
-  kind: "any";
-  of: Predicate[];
+export type AllPredicate = OfListPredicate<"all">;
+export type AnyPredicate = OfListPredicate<"any">;
+export interface AtLeastKPredicate extends OfListPredicate<"atLeastK"> {
+  k: number;
 }
 export interface NotPredicate {
   kind: "not";
   of: Predicate;
-}
-export interface AtLeastKPredicate {
-  kind: "atLeastK";
-  k: number;
-  of: Predicate[];
 }
 export interface RefPredicate {
   kind: "ref";
   predicate: string;
 }
 
-export interface SpeciesPredicate {
-  kind: "species";
+/** Exact-match (`is`) or membership (`in`) test over a single string attribute. */
+interface IsInPredicate<K extends string> {
+  kind: K;
   is?: string;
   in?: string[];
 }
-export interface AbilityPredicate {
-  kind: "ability";
-  is?: string;
-  in?: string[];
+export type SpeciesPredicate = IsInPredicate<"species">;
+export type AbilityPredicate = IsInPredicate<"ability">;
+export type NaturePredicate = IsInPredicate<"nature">;
+export type TeraTypePredicate = IsInPredicate<"teraType">;
+export interface ItemPredicate extends IsInPredicate<"item"> {
+  present?: boolean;
 }
-export interface NaturePredicate {
-  kind: "nature";
-  is?: string;
-  in?: string[];
-}
+
 export interface GenderPredicate {
   kind: "gender";
   is: "M" | "F" | "N";
@@ -179,37 +181,31 @@ export interface LevelPredicate {
   op: Op;
   value: number;
 }
-export interface ItemPredicate {
-  kind: "item";
-  is?: string;
-  in?: string[];
-  present?: boolean;
-}
-export interface MovePredicate {
-  kind: "move";
+
+/** "Knows one move" (`has`) or "knows any of" (`hasAny`) test, plus an atom-specific third option. */
+interface HasAnyPredicate<K extends string> {
+  kind: K;
   has?: string;
   hasAny?: string[];
+}
+export interface MovePredicate extends HasAnyPredicate<"move"> {
   hasAll?: string[];
 }
-export interface TypePredicate {
-  kind: "type";
-  has?: string;
-  hasAny?: string[];
+export interface TypePredicate extends HasAnyPredicate<"type"> {
   isExactly?: string[];
 }
-export interface TeraTypePredicate {
-  kind: "teraType";
-  is?: string;
-  in?: string[];
-}
+
 export interface InGroupPredicate {
   kind: "inGroup";
   group: string;
 }
 
+/** Entity kinds that carry `data/tags.json` taxonomy tags. */
+export type TaggableKind = "move" | "item" | "ability" | "species";
+
 export interface TaggedPredicate {
   kind: "tagged";
-  of: "move" | "item" | "ability" | "species";
+  of: TaggableKind;
   tag: string;
   facet?: string;
   equals?: string | number | boolean;
