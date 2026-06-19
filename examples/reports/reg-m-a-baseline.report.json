@@ -23,16 +23,26 @@
       "title": "At least 2 Water resists",
       "severity": "error",
       "pass": true,
-      "actual": 2, "op": ">=", "value": 2,
-      "satisfiedBy": [ { "slot": 3, "species": "garchomp" }, { "slot": 4, "species": "rillaboom" } ]
+      "actual": 2,
+      "op": ">=",
+      "value": 2,
+      "satisfiedBy": [
+        { "slot": 3, "species": "garchomp" },
+        { "slot": 4, "species": "rillaboom" }
+      ]
     },
     {
       "id": "speed-control-variety",
       "title": "At least 2 distinct forms of speed control",
       "severity": "error",
       "pass": true,
-      "actual": 2, "op": ">=", "value": 2,
-      "satisfiedBy": [ { "slot": 1, "species": "fluttermane" }, { "slot": 4, "species": "rillaboom" } ],
+      "actual": 2,
+      "op": ">=",
+      "value": 2,
+      "satisfiedBy": [
+        { "slot": 1, "species": "fluttermane" },
+        { "slot": 4, "species": "rillaboom" }
+      ],
       "detail": { "distinctValues": ["tailwind", "trick_room"] }
     },
     {
@@ -40,8 +50,13 @@
       "title": "At least 3 Protect users",
       "severity": "error",
       "pass": false,
-      "actual": 2, "op": ">=", "value": 3,
-      "satisfiedBy": [ { "slot": 0, "species": "incineroar" }, { "slot": 2, "species": "amoonguss" } ],
+      "actual": 2,
+      "op": ">=",
+      "value": 3,
+      "satisfiedBy": [
+        { "slot": 0, "species": "incineroar" },
+        { "slot": 2, "species": "amoonguss" }
+      ],
       "message": "Only 2 Protect-family users; add one more for board control."
     },
     {
@@ -49,9 +64,18 @@
       "title": "2 mons survive Garchomp Dragon Claw",
       "severity": "error",
       "pass": true,
-      "actual": 3, "op": ">=", "value": 2,
-      "satisfiedBy": [ { "slot": 0, "species": "incineroar" }, { "slot": 2, "species": "amoonguss" }, { "slot": 5, "species": "ironhands" } ],
-      "detail": { "worstCase": "no Intimidate", "rollPct": { "ironhands": [61.2, 72.4] } }
+      "actual": 3,
+      "op": ">=",
+      "value": 2,
+      "satisfiedBy": [
+        { "slot": 0, "species": "incineroar" },
+        { "slot": 2, "species": "amoonguss" },
+        { "slot": 5, "species": "ironhands" }
+      ],
+      "detail": {
+        "worstCase": "no Intimidate",
+        "rollPct": { "ironhands": [61.2, 72.4] }
+      }
     },
     {
       "id": "twohko-top10",
@@ -61,9 +85,18 @@
       "coverage": {
         "of": "all",
         "atLeast": 1,
-        "covered": ["fluttermane", "incineroar", "garchomp", "rillaboom", "landorustherian", "amoonguss", "urshifu", "chienpao"],
+        "covered": [
+          "fluttermane",
+          "incineroar",
+          "garchomp",
+          "rillaboom",
+          "landorustherian",
+          "amoonguss",
+          "urshifu",
+          "chienpao"
+        ],
         "uncovered": ["ironhands", "ironbundle"],
-        "byElement": { "fluttermane": [ { "slot": 0, "species": "incineroar" } ] }
+        "byElement": { "fluttermane": [{ "slot": 0, "species": "incineroar" }] }
       },
       "message": "2 of 10 top threats are not guaranteed-2HKO'd by anyone."
     },
@@ -72,15 +105,19 @@
       "title": "At least one Intimidate",
       "severity": "error",
       "pass": true,
-      "actual": 1, "op": ">=", "value": 1,
-      "satisfiedBy": [ { "slot": 0, "species": "incineroar" } ]
+      "actual": 1,
+      "op": ">=",
+      "value": 1,
+      "satisfiedBy": [{ "slot": 0, "species": "incineroar" }]
     },
     {
       "id": "fissure-immunity",
-      "title": "An answer to OHKO moves (Fissure)",
+      "title": "An answer to Fissure",
       "severity": "info",
       "pass": false,
-      "actual": 0, "op": ">=", "value": 1,
+      "actual": 0,
+      "op": ">=",
+      "value": 1,
       "satisfiedBy": [],
       "message": "No Flying/Levitate/Balloon/Sturdy/Sash answer to Fissure."
     }

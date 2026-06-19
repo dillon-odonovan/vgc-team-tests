@@ -6,17 +6,35 @@
   "definitions": {
     "threats": {
       "chomp_dragonclaw": {
-        "species": "garchomp", "move": "dragonclaw", "set": "usage",
-        "variations": [ { "name": "after Intimidate", "boosts": { "atk": -1 } } ]
+        "species": "garchomp",
+        "move": "dragonclaw",
+        "set": "usage",
+        "variations": [{ "name": "after Intimidate", "boosts": { "atk": -1 } }]
       },
-      "urshifu_suckerpunch": { "species": "urshifu", "move": "suckerpunch", "set": "usage" },
-      "rilla_grassyglide": { "species": "rillaboom", "move": "grassyglide", "set": "usage" },
-      "dnite_extremespeed": { "species": "dragonite", "move": "extremespeed", "set": "usage" }
+      "urshifu_suckerpunch": {
+        "species": "urshifu",
+        "move": "suckerpunch",
+        "set": "usage"
+      },
+      "rilla_grassyglide": {
+        "species": "rillaboom",
+        "move": "grassyglide",
+        "set": "usage"
+      },
+      "dnite_extremespeed": {
+        "species": "dragonite",
+        "move": "extremespeed",
+        "set": "usage"
+      }
     },
     "groups": {
       "common_priority": {
         "kind": "threats",
-        "members": ["urshifu_suckerpunch", "rilla_grassyglide", "dnite_extremespeed"]
+        "members": [
+          "urshifu_suckerpunch",
+          "rilla_grassyglide",
+          "dnite_extremespeed"
+        ]
       }
     }
   },
@@ -25,14 +43,34 @@
       "id": "two-survive-chomp-dclaw",
       "title": "2 mons survive Garchomp Dragon Claw",
       "rationale": "case:worst picks the most damaging variation (the non-Intimidated calc); roll:max means even the high roll leaves >0 HP.",
-      "assert": { "count": "members", "where": { "kind": "survives", "threat": "chomp_dragonclaw", "case": "worst", "roll": "max" }, "op": ">=", "value": 2 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "survives",
+          "threat": "chomp_dragonclaw",
+          "case": "worst",
+          "roll": "max"
+        },
+        "op": ">=",
+        "value": 2
+      }
     },
     {
       "id": "a-wall-survives-two-hits",
       "title": "Someone eats two Dragon Claws",
       "rationale": "hits:2 — a dedicated check that one member survives the threat twice.",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "survives", "threat": "chomp_dragonclaw", "hits": 2, "roll": "max" }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "survives",
+          "threat": "chomp_dragonclaw",
+          "hits": 2,
+          "roll": "max"
+        },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "resist-common-priority",
@@ -44,7 +82,13 @@
           "each": {
             "kind": "any",
             "of": [
-              { "kind": "typeEffectiveness", "role": "defending", "vsThreat": "$each", "op": "<=", "value": 0.5 },
+              {
+                "kind": "typeEffectiveness",
+                "role": "defending",
+                "vsThreat": "$each",
+                "op": "<=",
+                "value": 0.5
+              },
               { "kind": "survives", "threat": "$each", "roll": "max" }
             ]
           },

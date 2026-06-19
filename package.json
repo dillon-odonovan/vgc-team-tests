@@ -14,15 +14,34 @@
   ],
   "license": "MIT",
   "scripts": {
-    "test": "node --test test/*.test.mjs",
-    "validate": "node --test test/validate-examples.test.mjs",
-    "lint:data": "node --test test/data-lint.test.mjs",
-    "build:types": "json2ts -i schema/team-test-suite.schema.json -o types/suite.d.ts && json2ts -i schema/team-test-report.schema.json -o types/report.d.ts"
+    "pretest": "npm run build:test",
+    "test": "node --test dist-test/test/*.test.js",
+    "prevalidate": "npm run build:test",
+    "validate": "node --test dist-test/test/validate-examples.test.js",
+    "prelint:data": "npm run build:test",
+    "lint:data": "node --test dist-test/test/data-lint.test.js",
+    "build:types": "json2ts -i schema/team-test-suite.schema.json -o types/suite.d.ts && json2ts -i schema/team-test-report.schema.json -o types/report.d.ts",
+    "build": "tsc",
+    "build:test": "tsc -p tsconfig.test.json",
+    "dev": "tsx src/cli.ts",
+    "run": "node dist/cli.js",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "prepare": "husky",
+    "lint:staged": "lint-staged --config .lintstagedrc"
+  },
+  "dependencies": {
+    "@pkmn/dex": "^0.10.10",
+    "@smogon/calc": "^0.11.0"
   },
   "devDependencies": {
-    "@pkmn/dex": "^0.10.10",
+    "@types/node": "^25.9.3",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
-    "json-schema-to-typescript": "^15.0.4"
+    "husky": "^9.1.7",
+    "json-schema-to-typescript": "^15.0.4",
+    "lint-staged": "^17.0.7",
+    "prettier": "3.8.4",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
   }
 }

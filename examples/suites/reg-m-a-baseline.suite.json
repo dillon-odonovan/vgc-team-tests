@@ -12,26 +12,83 @@
         "species": "garchomp",
         "move": "dragonclaw",
         "set": "usage",
-        "variations": [ { "name": "after Intimidate", "boosts": { "atk": -1 } } ]
+        "variations": [{ "name": "after Intimidate", "boosts": { "atk": -1 } }]
       },
-      "scarf_chomp": { "species": "garchomp", "item": "choicescarf", "set": "usage" },
-      "flutter_moonblast": { "species": "fluttermane", "move": "moonblast", "set": "usage" }
+      "scarf_chomp": {
+        "species": "garchomp",
+        "item": "choicescarf",
+        "set": "usage"
+      },
+      "flutter_moonblast": {
+        "species": "fluttermane",
+        "move": "moonblast",
+        "set": "usage"
+      }
     },
     "groups": {
-      "top10": { "kind": "meta", "from": "usage", "topN": 10, "move": "bestDamaging" },
+      "top10": {
+        "kind": "meta",
+        "from": "usage",
+        "topN": 10,
+        "move": "bestDamaging"
+      },
       "all_types": {
         "kind": "values",
         "valueType": "type",
-        "members": ["normal","fire","water","electric","grass","ice","fighting","poison","ground","flying","psychic","bug","rock","ghost","dragon","dark","steel","fairy"]
+        "members": [
+          "normal",
+          "fire",
+          "water",
+          "electric",
+          "grass",
+          "ice",
+          "fighting",
+          "poison",
+          "ground",
+          "flying",
+          "psychic",
+          "bug",
+          "rock",
+          "ghost",
+          "dragon",
+          "dark",
+          "steel",
+          "fairy"
+        ]
       },
       "good_mons": {
         "kind": "species",
-        "members": ["garchomp","amoonguss","incineroar","rillaboom","fluttermane","ironhands","landorustherian","urshifu","dragonite","tornadustherian","chienpao","ursaluna"]
+        "members": [
+          "garchomp",
+          "amoonguss",
+          "incineroar",
+          "rillaboom",
+          "fluttermane",
+          "ironhands",
+          "landorustherian",
+          "urshifu",
+          "dragonite",
+          "tornadustherian",
+          "chienpao",
+          "ursaluna"
+        ]
       }
     },
     "predicates": {
-      "water_resist": { "kind": "typeEffectiveness", "role": "defending", "vsType": "water", "op": "<=", "value": 0.5 },
-      "is_fast": { "kind": "stat", "stat": "spe", "vs": "base", "op": ">", "value": 100 }
+      "water_resist": {
+        "kind": "typeEffectiveness",
+        "role": "defending",
+        "vsType": "water",
+        "op": "<=",
+        "value": 0.5
+      },
+      "is_fast": {
+        "kind": "stat",
+        "stat": "spe",
+        "vs": "base",
+        "op": ">",
+        "value": 100
+      }
     }
   },
   "tests": [
@@ -40,7 +97,12 @@
       "title": "At least 2 Water resists",
       "rationale": "Sustain vs rain teams and Water spam.",
       "severity": "error",
-      "assert": { "count": "members", "where": { "kind": "ref", "predicate": "water_resist" }, "op": ">=", "value": 2 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "ref", "predicate": "water_resist" },
+        "op": ">=",
+        "value": 2
+      }
     },
     {
       "id": "speed-control-variety",
@@ -50,7 +112,8 @@
       "assert": {
         "countDistinct": "facet:speedControlKind",
         "where": { "kind": "tagged", "of": "move", "tag": "speed_control" },
-        "op": ">=", "value": 2
+        "op": ">=",
+        "value": 2
       }
     },
     {
@@ -58,7 +121,12 @@
       "title": "At least 3 Protect users",
       "rationale": "Protect-family lets you stall turns, dodge double-targets, and reposition.",
       "severity": "error",
-      "assert": { "count": "members", "where": { "kind": "tagged", "of": "move", "tag": "protect" }, "op": ">=", "value": 3 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "tagged", "of": "move", "tag": "protect" },
+        "op": ">=",
+        "value": 3
+      }
     },
     {
       "id": "survive-garchomp-dragonclaw",
@@ -67,8 +135,14 @@
       "severity": "error",
       "assert": {
         "count": "members",
-        "where": { "kind": "survives", "threat": "chomp_dragonclaw", "case": "worst", "roll": "max" },
-        "op": ">=", "value": 2
+        "where": {
+          "kind": "survives",
+          "threat": "chomp_dragonclaw",
+          "case": "worst",
+          "roll": "max"
+        },
+        "op": ">=",
+        "value": 2
       }
     },
     {
@@ -79,7 +153,12 @@
       "assert": {
         "coverage": {
           "group": "top10",
-          "each": { "kind": "koes", "threat": "$each", "hits": 2, "roll": "min" },
+          "each": {
+            "kind": "koes",
+            "threat": "$each",
+            "hits": 2,
+            "roll": "min"
+          },
           "atLeast": 1,
           "of": "all"
         }
@@ -93,7 +172,13 @@
       "assert": {
         "coverage": {
           "group": "all_types",
-          "each": { "kind": "typeEffectiveness", "role": "defending", "vsType": "$each", "op": "<=", "value": 0.5 },
+          "each": {
+            "kind": "typeEffectiveness",
+            "role": "defending",
+            "vsType": "$each",
+            "op": "<=",
+            "value": 0.5
+          },
           "atLeast": 1,
           "of": "all"
         }
@@ -104,21 +189,36 @@
       "title": "At least one Intimidate",
       "rationale": "Opening Attack drop swings damage races and survival calcs.",
       "severity": "error",
-      "assert": { "count": "members", "where": { "kind": "ability", "is": "intimidate" }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "ability", "is": "intimidate" },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "fast-core",
       "title": "At least 2 mons faster than base 100",
       "rationale": "Natural speed control without relying on Tailwind/Scarf.",
       "severity": "warn",
-      "assert": { "count": "members", "where": { "kind": "ref", "predicate": "is_fast" }, "op": ">=", "value": 2 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "ref", "predicate": "is_fast" },
+        "op": ">=",
+        "value": 2
+      }
     },
     {
       "id": "fissure-immunity",
-      "title": "An answer to OHKO moves (Fissure)",
+      "title": "An answer to Fissure",
       "rationale": "Flying/Levitate/Air Balloon dodge Ground-type Fissure; Sturdy/Sash block any OHKO.",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "immuneTo", "moveTag": "ohko" }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "immuneTo", "moveTag": "fissure" },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "team-has-disruption-engine",
@@ -140,7 +240,12 @@
       "title": "At least 4 of 6 from the good-mons list",
       "rationale": "Bias the build toward proven, synergistic Pokemon.",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "inGroup", "group": "good_mons" }, "op": ">=", "value": 4 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "inGroup", "group": "good_mons" },
+        "op": ">=",
+        "value": 4
+      }
     },
     {
       "id": "tera-flexibility",
@@ -154,7 +259,13 @@
       "title": "[experimental] Stops Trick Room before it matters",
       "rationale": "Reserved foul-play atom: simulate vs common hard-Trick-Room leads. Flaky signal; info only.",
       "severity": "info",
-      "assert": { "team": { "kind": "foulPlay", "scenario": "stop_trickroom_t1", "threshold": 0.6 } }
+      "assert": {
+        "team": {
+          "kind": "foulPlay",
+          "scenario": "stop_trickroom_t1",
+          "threshold": 0.6
+        }
+      }
     }
   ]
 }

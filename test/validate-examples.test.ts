@@ -7,15 +7,23 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
-import Ajv from "ajv/dist/2020.js";
-import addFormats from "ajv-formats";
+import { Ajv2020 } from "ajv/dist/2020.js";
+import addFormatsImport from "ajv-formats";
+
+// ajv-formats' default export resolves to the CJS module namespace rather
+// than its `.default` under NodeNext's type-level CJS interop (a known rough
+// edge); the runtime value is correct, so cast at this one boundary.
+const addFormats = addFormatsImport as unknown as (ajv: Ajv2020) => void;
 
 const here = dirname(fileURLToPath(import.meta.url));
-const root = resolve(here, "..");
-const readJSON = (p) => JSON.parse(readFileSync(p, "utf8"));
+const root = resolve(here, "..", "..");
 
-function walkJSON(dir) {
-  const out = [];
+function readJSON<T = unknown>(p: string): T {
+  return JSON.parse(readFileSync(p, "utf8")) as T;
+}
+
+function walkJSON(dir: string): string[] {
+  const out: string[] = [];
   for (const entry of readdirSync(dir)) {
     const p = join(dir, entry);
     if (statSync(p).isDirectory()) out.push(...walkJSON(p));
@@ -24,17 +32,28 @@ function walkJSON(dir) {
   return out;
 }
 
-const ajv = new Ajv({ allErrors: true, strict: false });
+interface SchemaDoc {
+  $id: string;
+  [k: string]: unknown;
+}
+
+const ajv = new Ajv2020({ allErrors: true, strict: false });
 addFormats(ajv);
-const suiteSchema = readJSON(join(root, "schema/team-test-suite.schema.json"));
-const reportSchema = readJSON(join(root, "schema/team-test-report.schema.json"));
+const suiteSchema = readJSON<SchemaDoc>(
+  join(root, "schema/team-test-suite.schema.json"),
+);
+const reportSchema = readJSON<SchemaDoc>(
+  join(root, "schema/team-test-report.schema.json"),
+);
 ajv.addSchema(suiteSchema);
 ajv.addSchema(reportSchema);
 
 const validateSuite = ajv.getSchema(suiteSchema.$id);
 const validateReport = ajv.getSchema(reportSchema.$id);
+if (!validateSuite || !validateReport)
+  throw new Error("Failed to compile suite/report schemas");
 
-const fmt = (errors) => JSON.stringify(errors, null, 2);
+const fmt = (errors: unknown): string => JSON.stringify(errors, null, 2);
 
 for (const file of walkJSON(join(root, "examples"))) {
   const rel = file.slice(root.length + 1);
@@ -43,15 +62,24 @@ for (const file of walkJSON(join(root, "examples"))) {
     const data = readJSON(file);
     const validate = isReport ? validateReport : validateSuite;
     const ok = validate(data);
-    assert.ok(ok, `${rel} failed ${isReport ? "report" : "suite"} schema:\n${fmt(validate.errors)}`);
+    assert.ok(
+      ok,
+      `${rel} failed ${isReport ? "report" : "suite"} schema:\n${fmt(validate.errors)}`,
+    );
   });
 }
 
 test("data/threats.json conforms to the suite schema $defs", () => {
   const vThreat = ajv.compile({ $ref: `${suiteSchema.$id}#/$defs/Threat` });
   const vGroup = ajv.compile({ $ref: `${suiteSchema.$id}#/$defs/Group` });
-  const vVariation = ajv.compile({ $ref: `${suiteSchema.$id}#/$defs/Variation` });
-  const lib = readJSON(join(root, "data/threats.json"));
+  const vVariation = ajv.compile({
+    $ref: `${suiteSchema.$id}#/$defs/Variation`,
+  });
+  const lib = readJSON<{
+    threats?: Record<string, unknown>;
+    groups?: Record<string, unknown>;
+    variations?: Record<string, unknown>;
+  }>(join(root, "data/threats.json"));
   for (const [k, v] of Object.entries(lib.threats ?? {}))
     assert.ok(vThreat(v), `threat '${k}':\n${fmt(vThreat.errors)}`);
   for (const [k, v] of Object.entries(lib.groups ?? {}))

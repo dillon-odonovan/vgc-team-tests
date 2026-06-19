@@ -8,11 +8,16 @@ A suite is one JSON file. Minimum:
   "schemaVersion": "1.0.0",
   "name": "My suite",
   "tests": [
-    { "id": "kebab-case-id",
-      "assert": { "count": "members",
-                  "where": { "kind": "ability", "is": "intimidate" },
-                  "op": ">=", "value": 1 } }
-  ]
+    {
+      "id": "kebab-case-id",
+      "assert": {
+        "count": "members",
+        "where": { "kind": "ability", "is": "intimidate" },
+        "op": ">=",
+        "value": 1,
+      },
+    },
+  ],
 }
 ```
 
@@ -21,9 +26,9 @@ Point your editor at the `$schema` URL (or the local file) for completion and in
 ## Picking an assertion shape
 
 - **"At least / at most N members do X"** → `count`.
-- **"N *different kinds* of X"** → `countDistinct` over the distinguishing attribute (often a tag `facet:`). Two Tailwinds are one *kind*; Tailwind + Trick Room are two.
+- **"N _different kinds_ of X"** → `countDistinct` over the distinguishing attribute (often a tag `facet:`). Two Tailwinds are one _kind_; Tailwind + Trick Room are two.
 - **"For every X, the team has an answer"** → `coverage` over a group; `each` is checked per element with `$each` bound.
-- **"Several *different* existence requirements at once"** → `team` (e.g. someone has Fake Out **and** someone has redirection — possibly different slots).
+- **"Several _different_ existence requirements at once"** → `team` (e.g. someone has Fake Out **and** someone has redirection — possibly different slots).
 
 ## Severity & weight
 
@@ -46,7 +51,7 @@ Define a threat once in `definitions.threats`, reference it by name from any cal
 ```
 
 - **`set: "usage"`** is the default you want: it auto‑fills the spread (and item) from the suite's `meta` snapshot. Only spell out `evs`/`nature`/`item` when a calc needs exactness.
-- **`case` + `roll`** tune caution: `survives` with `case:"worst"` picks the most damaging variation; `roll:"max"` means *even the high roll* leaves >0 HP (a true survival). `koes` with `roll:"min"` means a *guaranteed* KO.
+- **`case` + `roll`** tune caution: `survives` with `case:"worst"` picks the most damaging variation; `roll:"max"` means _even the high roll_ leaves >0 HP (a true survival). `koes` with `roll:"min"` means a _guaranteed_ KO.
 - A threat is reusable on **either side** — `move` matters when it attacks (`survives`); it's ignored when the threat is a KO target (`koes`/`dealsDamage`).
 
 For "the current meta", use a `meta` group instead of listing names:
@@ -74,14 +79,14 @@ node -e "…"                                # or validate a single file with aj
 
 Every constraint family has an annotated example in [`examples/snippets/`](../examples/snippets):
 
-| file | demonstrates |
-|---|---|
-| `defense-types.json` | type resists, marilland‑style `coverage` over all types, defensive Tera |
-| `survival-calcs.json` | `survives`, `coverage` over a threat group, `vsThreat` |
-| `offense-calcs.json` | `koes`, `dealsDamage`, "2HKO top‑N" via a meta group |
-| `speed.json` | `stat` (base & final+mods), `outspeeds` |
-| `immunities.json` | `immuneTo` by effect and by `moveTag`, Intimidate |
+| file                   | demonstrates                                                               |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `defense-types.json`   | type resists, marilland‑style `coverage` over all types, defensive Tera    |
+| `survival-calcs.json`  | `survives`, `coverage` over a threat group, `vsThreat`                     |
+| `offense-calcs.json`   | `koes`, `dealsDamage`, "2HKO top‑N" via a meta group                       |
+| `speed.json`           | `stat` (base & final+mods), `outspeeds`                                    |
+| `immunities.json`      | `immuneTo` by effect and by `moveTag`, Intimidate                          |
 | `moves-and-items.json` | `tagged` (setup/protect/speed_control), `countDistinct`, literal item/move |
-| `hazards.json` | `canRemove` (toxic spikes) |
-| `composition.json` | `inGroup` allow‑list, `team` existential assertion |
-| `misc-atoms.json` | `nature`, `gender`, `level`, `atLeastK`, `ref`, `teraType` |
+| `hazards.json`         | `canRemove` (toxic spikes)                                                 |
+| `composition.json`     | `inGroup` allow‑list, `team` existential assertion                         |
+| `misc-atoms.json`      | `nature`, `gender`, `level`, `atLeastK`, `ref`, `teraType`                 |

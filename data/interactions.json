@@ -1,82 +1,170 @@
 {
-  "$comment": "Immunity & hazard-removal SOURCE map. Each effect/hazard maps to a source-predicate; the generic immuneTo / canRemove atoms look the effect up here and evaluate the source-predicate against the member. Add a new immunity by editing data — no schema change. Source-predicate grammar (a node is matched if it holds for the member): {\"type\": name|[names]} member is (one of) that type; {\"ability\": [ids]} ability in list; {\"item\": [ids]} item in list; {\"move\": [ids]} knows one of; {\"grounded\": true}; {\"weather\": name} requires active weather; {\"all\": [..]} = AND; {\"anyOf\": [..]} = OR (also the top-level form); {\"typeImmuneToMove\": true} member's typing is immune to the incoming move's type (used by per-move moveTag immunities like ohko: Flying vs Fissure).",
+  "$comment": "Immunity & hazard-removal SOURCE map. Each effect/hazard maps to a source-predicate; the generic immuneTo / canRemove atoms look the effect up here and evaluate the source-predicate against the member. Add a new immunity by editing data — no schema change. Source-predicate grammar (a node is matched if it holds for the member): {\"type\": name|[names]} member is (one of) that type; {\"ability\": [ids]} ability in list; {\"item\": [ids]} item in list; {\"move\": [ids]} knows one of; {\"grounded\": true}; {\"weather\": name} requires active weather; {\"all\": [..]} = AND; {\"anyOf\": [..]} = OR (also the top-level form); {\"typeImmuneToMove\": type|[types]} member's typing is immune to (any of) the given attack type(s) (e.g. fissure: \"ground\", dodged by Flying).",
   "version": "2026-05",
   "immunities": {
     "powder": {
-      "anyOf": [ { "type": "grass" }, { "ability": ["overcoat"] }, { "item": ["safetygoggles"] } ]
+      "anyOf": [
+        { "type": "grass" },
+        { "ability": ["overcoat"] },
+        { "item": ["safetygoggles"] }
+      ]
     },
     "prankster": {
-      "anyOf": [ { "type": "dark" } ]
+      "anyOf": [{ "type": "dark" }]
     },
     "intimidate": {
       "anyOf": [
-        { "ability": ["clearbody", "whitesmoke", "fullmetalbody", "hypercutter", "innerfocus", "oblivious", "owntempo", "scrappy", "guarddog"] },
+        {
+          "ability": [
+            "clearbody",
+            "whitesmoke",
+            "fullmetalbody",
+            "hypercutter",
+            "innerfocus",
+            "oblivious",
+            "owntempo",
+            "scrappy",
+            "guarddog"
+          ]
+        },
         { "item": ["clearamulet"] }
       ]
     },
     "ground": {
-      "anyOf": [ { "type": "flying" }, { "ability": ["levitate"] }, { "item": ["airballoon"] } ]
+      "anyOf": [
+        { "type": "flying" },
+        { "ability": ["levitate"] },
+        { "item": ["airballoon"] }
+      ]
     },
     "spore": {
-      "anyOf": [ { "type": "grass" }, { "ability": ["overcoat", "insomnia", "vitalspirit", "sweetveil", "comatose"] }, { "item": ["safetygoggles"] } ]
+      "anyOf": [
+        { "type": "grass" },
+        {
+          "ability": [
+            "overcoat",
+            "insomnia",
+            "vitalspirit",
+            "sweetveil",
+            "comatose"
+          ]
+        },
+        { "item": ["safetygoggles"] }
+      ]
     },
     "sleep": {
-      "anyOf": [ { "ability": ["insomnia", "vitalspirit", "sweetveil", "comatose"] } ]
+      "anyOf": [
+        { "ability": ["insomnia", "vitalspirit", "sweetveil", "comatose"] }
+      ]
     },
     "paralysis": {
-      "anyOf": [ { "type": "electric" }, { "ability": ["limber"] } ]
+      "anyOf": [{ "type": "electric" }, { "ability": ["limber"] }]
     },
     "burn": {
-      "anyOf": [ { "type": "fire" }, { "ability": ["waterveil", "waterbubble", "thermalexchange"] } ]
+      "anyOf": [
+        { "type": "fire" },
+        { "ability": ["waterveil", "waterbubble", "thermalexchange"] }
+      ]
     },
     "weather_chip": {
       "anyOf": [
-        { "ability": ["overcoat", "magicguard", "sandforce", "sandrush", "sandveil", "snowcloak", "icebody", "slushrush"] },
+        {
+          "ability": [
+            "overcoat",
+            "magicguard",
+            "sandforce",
+            "sandrush",
+            "sandveil",
+            "snowcloak",
+            "icebody",
+            "slushrush"
+          ]
+        },
         { "item": ["safetygoggles"] },
-        { "all": [ { "type": ["rock", "ground", "steel"] }, { "weather": "sand" } ] },
-        { "all": [ { "type": "ice" }, { "weather": "snow" } ] }
+        {
+          "all": [
+            { "type": ["rock", "ground", "steel"] },
+            { "weather": "sand" }
+          ]
+        },
+        { "all": [{ "type": "ice" }, { "weather": "snow" }] }
       ]
     },
     "ohko": {
-      "anyOf": [ { "ability": ["sturdy"] }, { "item": ["focussash"] } ]
+      "anyOf": [{ "ability": ["sturdy"] }, { "item": ["focussash"] }]
     },
     "trapping": {
-      "anyOf": [ { "type": "ghost" }, { "ability": ["runaway"] }, { "item": ["shedshell"] } ]
+      "anyOf": [
+        { "type": "ghost" },
+        { "ability": ["runaway"] },
+        { "item": ["shedshell"] }
+      ]
     },
     "taunt": {
-      "anyOf": [ { "ability": ["oblivious", "aromaveil"] }, { "item": ["mentalherb"] } ]
+      "anyOf": [
+        { "ability": ["oblivious", "aromaveil"] },
+        { "item": ["mentalherb"] }
+      ]
     },
     "redirection": {
-      "anyOf": [ { "ability": ["propellertail", "stalwart"] } ]
+      "anyOf": [{ "ability": ["propellertail", "stalwart"] }]
     }
   },
   "moveTagImmunities": {
-    "$comment": "For immuneTo {moveTag: X}: per-move immunity, combining type immunity with ability/item. e.g. Fissure (ohko, Ground) is dodged by Flying/Levitate/Air Balloon OR blocked by Sturdy.",
+    "$comment": "For immuneTo {moveTag: X}: 'ohko' is the type-agnostic universal blocker (Sturdy/Focus Sash). Each real OHKO move has its own moveTag layering that block on top of its specific type-immunity: fissure (Ground; Flying/Levitate/Air Balloon), horndrill (Normal; Ghost), sheercold (Ice; no type is naturally immune).",
     "ohko": {
-      "anyOf": [ { "ability": ["sturdy"] }, { "item": ["focussash"] }, { "typeImmuneToMove": true } ]
+      "anyOf": [{ "ability": ["sturdy"] }, { "item": ["focussash"] }]
+    },
+    "fissure": {
+      "anyOf": [
+        { "ability": ["sturdy"] },
+        { "item": ["focussash"] },
+        { "typeImmuneToMove": "ground" }
+      ]
+    },
+    "horndrill": {
+      "anyOf": [
+        { "ability": ["sturdy"] },
+        { "item": ["focussash"] },
+        { "typeImmuneToMove": "normal" }
+      ]
+    },
+    "sheercold": {
+      "anyOf": [
+        { "ability": ["sturdy"] },
+        { "item": ["focussash"] },
+        { "typeImmuneToMove": "ice" }
+      ]
     },
     "powder-move": {
-      "anyOf": [ { "type": "grass" }, { "ability": ["overcoat"] }, { "item": ["safetygoggles"] } ]
+      "anyOf": [
+        { "type": "grass" },
+        { "ability": ["overcoat"] },
+        { "item": ["safetygoggles"] }
+      ]
     },
     "sound": {
-      "anyOf": [ { "ability": ["soundproof"] } ]
+      "anyOf": [{ "ability": ["soundproof"] }]
     },
     "contact": {
-      "anyOf": [ { "item": ["protectivepads"] }, { "ability": ["longreach"] } ]
+      "anyOf": [{ "item": ["protectivepads"] }, { "ability": ["longreach"] }]
     }
   },
   "hazardRemoval": {
     "toxicspikes": {
-      "anyOf": [ { "all": [ { "type": "poison" }, { "grounded": true } ] }, { "move": ["rapidspin", "mortalspin", "tidyup", "defog"] } ]
+      "anyOf": [
+        { "all": [{ "type": "poison" }, { "grounded": true }] },
+        { "move": ["rapidspin", "mortalspin", "tidyup", "defog"] }
+      ]
     },
     "stealthrock": {
-      "anyOf": [ { "move": ["rapidspin", "mortalspin", "tidyup", "defog"] } ]
+      "anyOf": [{ "move": ["rapidspin", "mortalspin", "tidyup", "defog"] }]
     },
     "spikes": {
-      "anyOf": [ { "move": ["rapidspin", "mortalspin", "tidyup", "defog"] } ]
+      "anyOf": [{ "move": ["rapidspin", "mortalspin", "tidyup", "defog"] }]
     },
     "stickyweb": {
-      "anyOf": [ { "move": ["rapidspin", "mortalspin", "tidyup", "defog"] } ]
+      "anyOf": [{ "move": ["rapidspin", "mortalspin", "tidyup", "defog"] }]
     }
   }
 }

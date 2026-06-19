@@ -1,0 +1,6 @@
+# Clear git variables so lint-staged resolves the worktree path correctly
+unset GIT_DIR GIT_WORK_TREE
+
+# Run using the explicit config file location
+npx lint-staged --config .lintstagedrc
+

@@ -8,7 +8,12 @@
       "id": "can-remove-toxic-spikes",
       "title": "A way to remove Toxic Spikes",
       "rationale": "Grounded Poison absorb is the common doubles answer; spin/defog also satisfy.",
-      "assert": { "count": "members", "where": { "kind": "canRemove", "hazard": "toxicspikes" }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "canRemove", "hazard": "toxicspikes" },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "grounded-poison-absorber",
@@ -17,8 +22,15 @@
       "severity": "info",
       "assert": {
         "count": "members",
-        "where": { "kind": "all", "of": [ { "kind": "type", "has": "poison" }, { "kind": "not", "of": { "kind": "type", "has": "flying" } } ] },
-        "op": ">=", "value": 1
+        "where": {
+          "kind": "all",
+          "of": [
+            { "kind": "type", "has": "poison" },
+            { "kind": "not", "of": { "kind": "type", "has": "flying" } }
+          ]
+        },
+        "op": ">=",
+        "value": 1
       }
     }
   ]

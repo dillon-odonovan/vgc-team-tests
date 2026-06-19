@@ -8,7 +8,10 @@
   "additionalProperties": false,
   "properties": {
     "$schema": { "type": "string" },
-    "$comment": { "type": "string", "description": "Free-text authoring note; ignored by evaluators." },
+    "$comment": {
+      "type": "string",
+      "description": "Free-text authoring note; ignored by evaluators."
+    },
     "schemaVersion": {
       "type": "string",
       "pattern": "^\\d+\\.\\d+\\.\\d+$",
@@ -25,7 +28,10 @@
       "type": "object",
       "description": "Which metagame snapshot resolves 'set: usage' spreads and meta-derived threat groups.",
       "properties": {
-        "snapshot": { "type": "string", "description": "e.g. '2026-05' — a usage-stats period." },
+        "snapshot": {
+          "type": "string",
+          "description": "e.g. '2026-05' — a usage-stats period."
+        },
         "source": { "type": "string", "description": "e.g. 'smogon-usage'." }
       },
       "additionalProperties": true
@@ -80,39 +86,120 @@
     },
     "TypeName": {
       "type": "string",
-      "enum": ["normal","fire","water","electric","grass","ice","fighting","poison","ground","flying","psychic","bug","rock","ghost","dragon","dark","steel","fairy"]
+      "enum": [
+        "normal",
+        "fire",
+        "water",
+        "electric",
+        "grass",
+        "ice",
+        "fighting",
+        "poison",
+        "ground",
+        "flying",
+        "psychic",
+        "bug",
+        "rock",
+        "ghost",
+        "dragon",
+        "dark",
+        "steel",
+        "fairy"
+      ]
     },
     "TeraType": {
       "type": "string",
-      "enum": ["normal","fire","water","electric","grass","ice","fighting","poison","ground","flying","psychic","bug","rock","ghost","dragon","dark","steel","fairy","stellar"]
+      "enum": [
+        "normal",
+        "fire",
+        "water",
+        "electric",
+        "grass",
+        "ice",
+        "fighting",
+        "poison",
+        "ground",
+        "flying",
+        "psychic",
+        "bug",
+        "rock",
+        "ghost",
+        "dragon",
+        "dark",
+        "steel",
+        "fairy",
+        "stellar"
+      ]
     },
     "TypeNameOrEach": {
-      "anyOf": [ { "$ref": "#/$defs/TypeName" }, { "const": "$each" } ]
+      "anyOf": [{ "$ref": "#/$defs/TypeName" }, { "const": "$each" }]
     },
     "NameOrEach": {
-      "anyOf": [ { "$ref": "#/$defs/Name" }, { "const": "$each" } ]
+      "anyOf": [{ "$ref": "#/$defs/Name" }, { "const": "$each" }]
     },
     "StatKey": {
       "type": "string",
-      "enum": ["hp","atk","def","spa","spd","spe"],
+      "enum": ["hp", "atk", "def", "spa", "spd", "spe"],
       "description": "Canonical Showdown stat key order (hp, atk, def, spa, spd, spe)."
     },
     "Nature": {
       "type": "string",
-      "enum": ["hardy","lonely","brave","adamant","naughty","bold","docile","relaxed","impish","lax","timid","hasty","serious","jolly","naive","modest","mild","quiet","bashful","rash","calm","gentle","sassy","careful","quirky"]
+      "enum": [
+        "hardy",
+        "lonely",
+        "brave",
+        "adamant",
+        "naughty",
+        "bold",
+        "docile",
+        "relaxed",
+        "impish",
+        "lax",
+        "timid",
+        "hasty",
+        "serious",
+        "jolly",
+        "naive",
+        "modest",
+        "mild",
+        "quiet",
+        "bashful",
+        "rash",
+        "calm",
+        "gentle",
+        "sassy",
+        "careful",
+        "quirky"
+      ]
     },
-    "Gender": { "type": "string", "enum": ["M","F","N"] },
+    "Gender": { "type": "string", "enum": ["M", "F", "N"] },
     "Op": {
       "type": "string",
-      "enum": [">=","<=",">","<","==","!="],
+      "enum": [">=", "<=", ">", "<", "==", "!="],
       "description": "Comparison operator for thresholds and numeric atoms."
     },
     "StatModifier": {
       "type": "string",
       "description": "A named multiplier applied to a computed stat (mostly speed). Closed vocab the evaluator understands; extend here as needed.",
-      "enum": ["scarf","tailwind","paralysis","swift_swim","chlorophyll","sand_rush","slush_rush","surge_surfer","unburden","quark_drive_spe","protosynthesis_spe","choice_band","choice_specs","iron_ball","grass_pelt"]
+      "enum": [
+        "scarf",
+        "tailwind",
+        "paralysis",
+        "swift_swim",
+        "chlorophyll",
+        "sand_rush",
+        "slush_rush",
+        "surge_surfer",
+        "unburden",
+        "quark_drive_spe",
+        "protosynthesis_spe",
+        "choice_band",
+        "choice_specs",
+        "iron_ball",
+        "grass_pelt"
+      ]
     },
-    "Roll": { "type": "string", "enum": ["min","max","avg"] },
+    "Roll": { "type": "string", "enum": ["min", "max", "avg"] },
     "EvSpread": {
       "type": "object",
       "description": "EV (or, in Champions formats, stat-point) investment. Caps are format-driven and not enforced here.",
@@ -160,9 +247,19 @@
       "description": "Battle field, projecting onto @smogon/calc Field. gameType defaults to doubles.",
       "additionalProperties": false,
       "properties": {
-        "gameType": { "type": "string", "enum": ["singles","doubles"], "default": "doubles" },
-        "weather": { "type": "string", "enum": ["sun","rain","sand","snow","none"] },
-        "terrain": { "type": "string", "enum": ["electric","grassy","misty","psychic","none"] },
+        "gameType": {
+          "type": "string",
+          "enum": ["singles", "doubles"],
+          "default": "doubles"
+        },
+        "weather": {
+          "type": "string",
+          "enum": ["sun", "rain", "sand", "snow", "none"]
+        },
+        "terrain": {
+          "type": "string",
+          "enum": ["electric", "grassy", "misty", "psychic", "none"]
+        },
         "trickRoom": { "type": "boolean" },
         "attackerSide": { "$ref": "#/$defs/SideSpec" },
         "defenderSide": { "$ref": "#/$defs/SideSpec" }
@@ -187,7 +284,10 @@
       "additionalProperties": false,
       "properties": {
         "species": { "$ref": "#/$defs/Id" },
-        "move": { "$ref": "#/$defs/Id", "description": "Omit for speed-only threats (outspeeds)." },
+        "move": {
+          "$ref": "#/$defs/Id",
+          "description": "Omit for speed-only threats (outspeeds)."
+        },
         "set": {
           "type": "string",
           "pattern": "^[a-z0-9][a-z0-9_-]*$",
@@ -200,7 +300,10 @@
         "ivs": { "$ref": "#/$defs/EvSpread" },
         "level": { "type": "integer", "minimum": 1, "maximum": 100 },
         "teraType": { "$ref": "#/$defs/TeraType" },
-        "tera": { "type": "boolean", "description": "Whether the threat is Terastallized for this calc." },
+        "tera": {
+          "type": "boolean",
+          "description": "Whether the threat is Terastallized for this calc."
+        },
         "boosts": { "$ref": "#/$defs/Boosts" },
         "isCrit": { "type": "boolean" },
         "field": { "$ref": "#/$defs/FieldSpec" },
@@ -208,13 +311,16 @@
           "type": "array",
           "description": "Named (string) or inline variations expanded into multiple calc instances; survives/koes 'case' selects across them.",
           "items": {
-            "oneOf": [ { "$ref": "#/$defs/Name" }, { "$ref": "#/$defs/Variation" } ]
+            "oneOf": [
+              { "$ref": "#/$defs/Name" },
+              { "$ref": "#/$defs/Variation" }
+            ]
           }
         }
       }
     },
     "ThreatRef": {
-      "oneOf": [ { "$ref": "#/$defs/Name" }, { "$ref": "#/$defs/Threat" } ]
+      "oneOf": [{ "$ref": "#/$defs/Name" }, { "$ref": "#/$defs/Threat" }]
     },
     "Group": {
       "type": "object",
@@ -228,7 +334,11 @@
           "properties": {
             "kind": { "const": "species" },
             "description": { "type": "string" },
-            "members": { "type": "array", "items": { "$ref": "#/$defs/Id" }, "minItems": 1 }
+            "members": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/Id" },
+              "minItems": 1
+            }
           }
         },
         {
@@ -238,7 +348,11 @@
           "properties": {
             "kind": { "const": "threats" },
             "description": { "type": "string" },
-            "members": { "type": "array", "items": { "$ref": "#/$defs/ThreatRef" }, "minItems": 1 }
+            "members": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/ThreatRef" },
+              "minItems": 1
+            }
           }
         },
         {
@@ -268,8 +382,15 @@
           "properties": {
             "kind": { "const": "values" },
             "description": { "type": "string" },
-            "valueType": { "type": "string", "enum": ["type", "move", "item", "ability", "species"] },
-            "members": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            "valueType": {
+              "type": "string",
+              "enum": ["type", "move", "item", "ability", "species"]
+            },
+            "members": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1
+            }
           }
         }
       ]
@@ -282,8 +403,15 @@
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
         "title": { "type": "string" },
-        "rationale": { "type": "string", "description": "Why this constraint matters — surfaced in reports." },
-        "severity": { "type": "string", "enum": ["error", "warn", "info"], "default": "error" },
+        "rationale": {
+          "type": "string",
+          "description": "Why this constraint matters — surfaced in reports."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["error", "warn", "info"],
+          "default": "error"
+        },
         "weight": { "type": "number", "minimum": 0, "default": 1 },
         "tags": { "type": "array", "items": { "type": "string" } },
         "assert": { "$ref": "#/$defs/Assert" }
@@ -338,7 +466,11 @@
                 "by": { "const": "members", "default": "members" },
                 "each": { "$ref": "#/$defs/Predicate" },
                 "atLeast": { "type": "integer", "minimum": 1, "default": 1 },
-                "of": { "type": "string", "enum": ["all", "any"], "default": "all" }
+                "of": {
+                  "type": "string",
+                  "enum": ["all", "any"],
+                  "default": "all"
+                }
               }
             }
           }
@@ -368,95 +500,194 @@
       "required": ["kind"],
       "oneOf": [
         {
-          "title": "all", "additionalProperties": false, "required": ["kind", "of"],
-          "properties": { "kind": { "const": "all" }, "of": { "$ref": "#/$defs/PredicateList" } }
+          "title": "all",
+          "additionalProperties": false,
+          "required": ["kind", "of"],
+          "properties": {
+            "kind": { "const": "all" },
+            "of": { "$ref": "#/$defs/PredicateList" }
+          }
         },
         {
-          "title": "any", "additionalProperties": false, "required": ["kind", "of"],
-          "properties": { "kind": { "const": "any" }, "of": { "$ref": "#/$defs/PredicateList" } }
+          "title": "any",
+          "additionalProperties": false,
+          "required": ["kind", "of"],
+          "properties": {
+            "kind": { "const": "any" },
+            "of": { "$ref": "#/$defs/PredicateList" }
+          }
         },
         {
-          "title": "not", "additionalProperties": false, "required": ["kind", "of"],
-          "properties": { "kind": { "const": "not" }, "of": { "$ref": "#/$defs/Predicate" } }
+          "title": "not",
+          "additionalProperties": false,
+          "required": ["kind", "of"],
+          "properties": {
+            "kind": { "const": "not" },
+            "of": { "$ref": "#/$defs/Predicate" }
+          }
         },
         {
-          "title": "atLeastK", "additionalProperties": false, "required": ["kind", "k", "of"],
-          "properties": { "kind": { "const": "atLeastK" }, "k": { "type": "integer", "minimum": 1 }, "of": { "$ref": "#/$defs/PredicateList" } }
+          "title": "atLeastK",
+          "additionalProperties": false,
+          "required": ["kind", "k", "of"],
+          "properties": {
+            "kind": { "const": "atLeastK" },
+            "k": { "type": "integer", "minimum": 1 },
+            "of": { "$ref": "#/$defs/PredicateList" }
+          }
         },
         {
-          "title": "ref", "additionalProperties": false, "required": ["kind", "predicate"],
-          "properties": { "kind": { "const": "ref" }, "predicate": { "$ref": "#/$defs/Name" } }
+          "title": "ref",
+          "additionalProperties": false,
+          "required": ["kind", "predicate"],
+          "properties": {
+            "kind": { "const": "ref" },
+            "predicate": { "$ref": "#/$defs/Name" }
+          }
         },
 
         {
-          "title": "species", "additionalProperties": false, "required": ["kind"],
-          "properties": { "kind": { "const": "species" }, "is": { "$ref": "#/$defs/Id" }, "in": { "type": "array", "items": { "$ref": "#/$defs/Id" } } },
-          "anyOf": [ { "required": ["is"] }, { "required": ["in"] } ]
+          "title": "species",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "const": "species" },
+            "is": { "$ref": "#/$defs/Id" },
+            "in": { "type": "array", "items": { "$ref": "#/$defs/Id" } }
+          },
+          "anyOf": [{ "required": ["is"] }, { "required": ["in"] }]
         },
         {
-          "title": "ability", "additionalProperties": false, "required": ["kind"],
-          "properties": { "kind": { "const": "ability" }, "is": { "$ref": "#/$defs/Id" }, "in": { "type": "array", "items": { "$ref": "#/$defs/Id" } } },
-          "anyOf": [ { "required": ["is"] }, { "required": ["in"] } ]
+          "title": "ability",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "const": "ability" },
+            "is": { "$ref": "#/$defs/Id" },
+            "in": { "type": "array", "items": { "$ref": "#/$defs/Id" } }
+          },
+          "anyOf": [{ "required": ["is"] }, { "required": ["in"] }]
         },
         {
-          "title": "nature", "additionalProperties": false, "required": ["kind"],
-          "properties": { "kind": { "const": "nature" }, "is": { "$ref": "#/$defs/Nature" }, "in": { "type": "array", "items": { "$ref": "#/$defs/Nature" } } },
-          "anyOf": [ { "required": ["is"] }, { "required": ["in"] } ]
+          "title": "nature",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "const": "nature" },
+            "is": { "$ref": "#/$defs/Nature" },
+            "in": { "type": "array", "items": { "$ref": "#/$defs/Nature" } }
+          },
+          "anyOf": [{ "required": ["is"] }, { "required": ["in"] }]
         },
         {
-          "title": "gender", "additionalProperties": false, "required": ["kind", "is"],
-          "properties": { "kind": { "const": "gender" }, "is": { "$ref": "#/$defs/Gender" } }
+          "title": "gender",
+          "additionalProperties": false,
+          "required": ["kind", "is"],
+          "properties": {
+            "kind": { "const": "gender" },
+            "is": { "$ref": "#/$defs/Gender" }
+          }
         },
         {
-          "title": "level", "additionalProperties": false, "required": ["kind", "op", "value"],
-          "properties": { "kind": { "const": "level" }, "op": { "$ref": "#/$defs/Op" }, "value": { "type": "integer", "minimum": 1, "maximum": 100 } }
+          "title": "level",
+          "additionalProperties": false,
+          "required": ["kind", "op", "value"],
+          "properties": {
+            "kind": { "const": "level" },
+            "op": { "$ref": "#/$defs/Op" },
+            "value": { "type": "integer", "minimum": 1, "maximum": 100 }
+          }
         },
         {
-          "title": "item", "additionalProperties": false, "required": ["kind"],
+          "title": "item",
+          "additionalProperties": false,
+          "required": ["kind"],
           "properties": {
             "kind": { "const": "item" },
             "is": { "$ref": "#/$defs/Id" },
             "in": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
-            "present": { "type": "boolean", "description": "true = holds any item; false = holds no item." }
+            "present": {
+              "type": "boolean",
+              "description": "true = holds any item; false = holds no item."
+            }
           },
-          "anyOf": [ { "required": ["is"] }, { "required": ["in"] }, { "required": ["present"] } ]
+          "anyOf": [
+            { "required": ["is"] },
+            { "required": ["in"] },
+            { "required": ["present"] }
+          ]
         },
         {
-          "title": "move", "additionalProperties": false, "required": ["kind"],
+          "title": "move",
+          "additionalProperties": false,
+          "required": ["kind"],
           "properties": {
             "kind": { "const": "move" },
             "has": { "$ref": "#/$defs/Id" },
             "hasAny": { "type": "array", "items": { "$ref": "#/$defs/Id" } },
             "hasAll": { "type": "array", "items": { "$ref": "#/$defs/Id" } }
           },
-          "anyOf": [ { "required": ["has"] }, { "required": ["hasAny"] }, { "required": ["hasAll"] } ]
+          "anyOf": [
+            { "required": ["has"] },
+            { "required": ["hasAny"] },
+            { "required": ["hasAll"] }
+          ]
         },
         {
-          "title": "type", "additionalProperties": false, "required": ["kind"],
+          "title": "type",
+          "additionalProperties": false,
+          "required": ["kind"],
           "properties": {
             "kind": { "const": "type" },
             "has": { "$ref": "#/$defs/TypeName" },
-            "hasAny": { "type": "array", "items": { "$ref": "#/$defs/TypeName" } },
-            "isExactly": { "type": "array", "items": { "$ref": "#/$defs/TypeName" }, "minItems": 1, "maxItems": 2 }
+            "hasAny": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/TypeName" }
+            },
+            "isExactly": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/TypeName" },
+              "minItems": 1,
+              "maxItems": 2
+            }
           },
-          "anyOf": [ { "required": ["has"] }, { "required": ["hasAny"] }, { "required": ["isExactly"] } ]
+          "anyOf": [
+            { "required": ["has"] },
+            { "required": ["hasAny"] },
+            { "required": ["isExactly"] }
+          ]
         },
         {
-          "title": "teraType", "additionalProperties": false, "required": ["kind"],
-          "properties": { "kind": { "const": "teraType" }, "is": { "$ref": "#/$defs/TeraType" }, "in": { "type": "array", "items": { "$ref": "#/$defs/TeraType" } } },
-          "anyOf": [ { "required": ["is"] }, { "required": ["in"] } ]
+          "title": "teraType",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "const": "teraType" },
+            "is": { "$ref": "#/$defs/TeraType" },
+            "in": { "type": "array", "items": { "$ref": "#/$defs/TeraType" } }
+          },
+          "anyOf": [{ "required": ["is"] }, { "required": ["in"] }]
         },
         {
-          "title": "inGroup", "additionalProperties": false, "required": ["kind", "group"],
-          "properties": { "kind": { "const": "inGroup" }, "group": { "$ref": "#/$defs/Name" } }
+          "title": "inGroup",
+          "additionalProperties": false,
+          "required": ["kind", "group"],
+          "properties": {
+            "kind": { "const": "inGroup" },
+            "group": { "$ref": "#/$defs/Name" }
+          }
         },
         {
           "title": "tagged",
           "description": "Member has an entity of type 'of' carrying 'tag' in data/tags.json. With facet+equals, that entity's facet value must equal 'equals'.",
-          "additionalProperties": false, "required": ["kind", "of", "tag"],
+          "additionalProperties": false,
+          "required": ["kind", "of", "tag"],
           "properties": {
             "kind": { "const": "tagged" },
-            "of": { "type": "string", "enum": ["move", "item", "ability", "species"] },
+            "of": {
+              "type": "string",
+              "enum": ["move", "item", "ability", "species"]
+            },
             "tag": { "type": "string" },
             "facet": { "type": "string" },
             "equals": { "type": ["string", "number", "boolean"] }
@@ -465,12 +696,20 @@
         {
           "title": "stat",
           "description": "Compare a stat. vs:'base' uses the species base stat; vs:'final' computes the level-50 stat from EVs/IVs/nature, then applies 'mods' multipliers (scarf, tailwind, paralysis, weather speed abilities, ...).",
-          "additionalProperties": false, "required": ["kind", "stat", "op", "value"],
+          "additionalProperties": false,
+          "required": ["kind", "stat", "op", "value"],
           "properties": {
             "kind": { "const": "stat" },
             "stat": { "$ref": "#/$defs/StatKey" },
-            "vs": { "type": "string", "enum": ["base", "final"], "default": "final" },
-            "mods": { "type": "array", "items": { "$ref": "#/$defs/StatModifier" } },
+            "vs": {
+              "type": "string",
+              "enum": ["base", "final"],
+              "default": "final"
+            },
+            "mods": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/StatModifier" }
+            },
             "op": { "$ref": "#/$defs/Op" },
             "value": { "type": "number" }
           }
@@ -478,56 +717,84 @@
         {
           "title": "outspeeds",
           "description": "Member's effective speed beats the threat's (the threat carries its own scarf/mods). underTrickRoom flips the comparison.",
-          "additionalProperties": false, "required": ["kind", "threat"],
+          "additionalProperties": false,
+          "required": ["kind", "threat"],
           "properties": {
             "kind": { "const": "outspeeds" },
             "threat": { "$ref": "#/$defs/NameOrEach" },
-            "mods": { "type": "array", "items": { "$ref": "#/$defs/StatModifier" }, "description": "Modifiers applied to the MEMBER." },
-            "orSpeedTie": { "type": "boolean", "default": false, "description": "Treat a speed tie as success." },
+            "mods": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/StatModifier" },
+              "description": "Modifiers applied to the MEMBER."
+            },
+            "orSpeedTie": {
+              "type": "boolean",
+              "default": false,
+              "description": "Treat a speed tie as success."
+            },
             "underTrickRoom": { "type": "boolean", "default": false }
           }
         },
         {
           "title": "typeEffectiveness",
           "description": "role:'defending' = the multiplier of incoming vsType against the member's typing (resist => <= 0.5). role:'attacking' = the member's effectiveness of vsType against the target. withTera evaluates the tera typing.",
-          "additionalProperties": false, "required": ["kind", "op", "value"],
+          "additionalProperties": false,
+          "required": ["kind", "op", "value"],
           "properties": {
             "kind": { "const": "typeEffectiveness" },
-            "role": { "type": "string", "enum": ["defending", "attacking"], "default": "defending" },
+            "role": {
+              "type": "string",
+              "enum": ["defending", "attacking"],
+              "default": "defending"
+            },
             "vsType": { "$ref": "#/$defs/TypeNameOrEach" },
             "vsThreat": { "$ref": "#/$defs/NameOrEach" },
             "withTera": { "type": "boolean", "default": false },
             "op": { "$ref": "#/$defs/Op" },
             "value": { "type": "number", "minimum": 0 }
           },
-          "anyOf": [ { "required": ["vsType"] }, { "required": ["vsThreat"] } ]
+          "anyOf": [{ "required": ["vsType"] }, { "required": ["vsThreat"] }]
         },
         {
           "title": "immuneTo",
           "description": "Member is immune to 'effect' (a key in data/interactions.json immunities) OR to a class of move via 'moveTag' (type/ability immunity, e.g. 'ohko'). Generic: new immunity sources are added in data, not here.",
-          "additionalProperties": false, "required": ["kind"],
+          "additionalProperties": false,
+          "required": ["kind"],
           "properties": {
             "kind": { "const": "immuneTo" },
             "effect": { "type": "string" },
             "moveTag": { "type": "string" },
             "move": { "$ref": "#/$defs/Id" }
           },
-          "anyOf": [ { "required": ["effect"] }, { "required": ["moveTag"] }, { "required": ["move"] } ]
+          "anyOf": [
+            { "required": ["effect"] },
+            { "required": ["moveTag"] },
+            { "required": ["move"] }
+          ]
         },
         {
           "title": "canRemove",
           "description": "Member can remove a hazard (key in data/interactions.json hazardRemoval) — e.g. grounded-poison absorbs toxic spikes, or knows a remover move.",
-          "additionalProperties": false, "required": ["kind", "hazard"],
-          "properties": { "kind": { "const": "canRemove" }, "hazard": { "type": "string" } }
+          "additionalProperties": false,
+          "required": ["kind", "hazard"],
+          "properties": {
+            "kind": { "const": "canRemove" },
+            "hazard": { "type": "string" }
+          }
         },
         {
           "title": "survives",
           "description": "Member survives the threat's hit(s) from full HP. 'case' selects across the threat's variations (worst = most damaging). roll:'max' = even the high roll leaves >0 HP (true survival).",
-          "additionalProperties": false, "required": ["kind", "threat"],
+          "additionalProperties": false,
+          "required": ["kind", "threat"],
           "properties": {
             "kind": { "const": "survives" },
             "threat": { "$ref": "#/$defs/NameOrEach" },
-            "case": { "type": "string", "enum": ["worst", "best", "specified"], "default": "worst" },
+            "case": {
+              "type": "string",
+              "enum": ["worst", "best", "specified"],
+              "default": "worst"
+            },
             "variation": { "$ref": "#/$defs/Name" },
             "roll": { "$ref": "#/$defs/Roll", "default": "max" },
             "hits": { "type": "integer", "minimum": 1, "default": 1 },
@@ -537,12 +804,17 @@
         {
           "title": "koes",
           "description": "Member's best damaging move KOs the threat in 'hits' hits (1=OHKO, 2=2HKO). roll:'min' = guaranteed (even the low roll).",
-          "additionalProperties": false, "required": ["kind", "threat"],
+          "additionalProperties": false,
+          "required": ["kind", "threat"],
           "properties": {
             "kind": { "const": "koes" },
             "threat": { "$ref": "#/$defs/NameOrEach" },
             "hits": { "type": "integer", "minimum": 1, "default": 1 },
-            "roll": { "type": "string", "enum": ["min", "max"], "default": "min" },
+            "roll": {
+              "type": "string",
+              "enum": ["min", "max"],
+              "default": "min"
+            },
             "move": { "$ref": "#/$defs/Id" },
             "withTera": { "type": "boolean", "default": false }
           }
@@ -550,22 +822,29 @@
         {
           "title": "dealsDamage",
           "description": "Member deals at least/at most a fraction of the threat's HP with a (best or named) move.",
-          "additionalProperties": false, "required": ["kind", "threat", "fraction"],
+          "additionalProperties": false,
+          "required": ["kind", "threat", "fraction"],
           "properties": {
             "kind": { "const": "dealsDamage" },
             "threat": { "$ref": "#/$defs/NameOrEach" },
             "move": { "$ref": "#/$defs/Id" },
             "roll": { "$ref": "#/$defs/Roll", "default": "min" },
             "fraction": {
-              "type": "object", "additionalProperties": false, "required": ["op", "value"],
-              "properties": { "op": { "$ref": "#/$defs/Op" }, "value": { "type": "number", "minimum": 0 } }
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["op", "value"],
+              "properties": {
+                "op": { "$ref": "#/$defs/Op" },
+                "value": { "type": "number", "minimum": 0 }
+              }
             }
           }
         },
         {
           "title": "foulPlay",
           "description": "RESERVED future atom: a flaky signal from a battle-AI (foul-play / 'blackglasses') over a toy board state. Defined now so suites referencing it validate; use severity:'info'.",
-          "additionalProperties": false, "required": ["kind", "scenario"],
+          "additionalProperties": false,
+          "required": ["kind", "scenario"],
           "properties": {
             "kind": { "const": "foulPlay" },
             "scenario": { "type": "string" },
