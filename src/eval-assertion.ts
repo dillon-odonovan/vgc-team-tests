@@ -4,7 +4,7 @@
  * by the engine afterward).
  */
 import { compare } from "./compare.js";
-import { evalPredicate } from "./eval-predicate.js";
+import { evalComposite, evalPredicate } from "./eval-predicate.js";
 import { tryOrNull } from "./safe.js";
 import { memberTypes } from "./team-member.js";
 import { resolveGroup } from "./threats.js";
@@ -247,27 +247,13 @@ function evalTeamPredicate(
   team: TeamMember[],
   ctx: EvalContext,
 ): boolean {
-  switch (pred.kind) {
-    case "all":
-      return pred.of.every((p) => evalTeamPredicate(p, team, ctx));
-    case "any":
-      return pred.of.some((p) => evalTeamPredicate(p, team, ctx));
-    case "not":
-      return !evalTeamPredicate(pred.of, team, ctx);
-    case "atLeastK": {
-      let k = 0;
-      for (const p of pred.of) if (evalTeamPredicate(p, team, ctx)) k++;
-      return k >= pred.k;
-    }
-    case "ref": {
-      const def = ctx.suite.definitions?.predicates?.[pred.predicate];
-      if (!def) throw new Error(`Unknown predicate ref: ${pred.predicate}`);
-      return evalTeamPredicate(def, team, ctx);
-    }
-    default:
-      // Leaf atom: existential over team
-      return team.some((m) => safeEval(pred, m, ctx));
-  }
+  return evalComposite(
+    pred,
+    ctx,
+    (p, c) => evalTeamPredicate(p, team, c),
+    // Leaf atom: existential over team
+    (p, c) => team.some((m) => safeEval(p, m, c)),
+  );
 }
 
 function evalTeam(

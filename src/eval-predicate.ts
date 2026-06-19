@@ -34,14 +34,6 @@ import type {
   Variation,
 } from "./types.js";
 
-// Attack type for each moveTag's `typeImmuneToMove` check. "ohko" has no
-// entry here — it has no `typeImmuneToMove` branch in data/interactions.json.
-const MOVE_TAG_TYPES: Record<string, string[]> = {
-  fissure: ["ground"],
-  horndrill: ["normal"],
-  sheercold: ["ice"],
-};
-
 /** Wraps a possibly-absent `tags.json` entry lookup as a 0-or-1-element list, for uniform iteration. */
 function singleEntry(
   byId: Record<string, TagEntry> | undefined,
@@ -82,6 +74,46 @@ function evalIsIn(
 }
 
 /**
+ * Shared traversal for the boolean composite predicates (`all`/`any`/`not`/
+ * `atLeastK`/`ref`). {@link evalPredicate} (member scope) and
+ * `evalTeamPredicate` in eval-assertion.ts (team scope) both call this —
+ * they differ only in what `leaf` does with a non-composite predicate, so
+ * factoring the traversal out here keeps that the *only* difference between
+ * the two instead of two copies of the same switch.
+ *
+ * @param recurse - Re-enters this same traversal for a sub-predicate.
+ * @param leaf - Handles any predicate that isn't one of the composite kinds.
+ * @throws If a `ref` name doesn't resolve to a defined predicate.
+ */
+export function evalComposite(
+  pred: Predicate,
+  ctx: EvalContext,
+  recurse: (p: Predicate, ctx: EvalContext) => boolean,
+  leaf: (p: Predicate, ctx: EvalContext) => boolean,
+): boolean {
+  switch (pred.kind) {
+    case "all":
+      return pred.of.every((p) => recurse(p, ctx));
+    case "any":
+      return pred.of.some((p) => recurse(p, ctx));
+    case "not":
+      return !recurse(pred.of, ctx);
+    case "atLeastK": {
+      let k = 0;
+      for (const p of pred.of) if (recurse(p, ctx)) k++;
+      return k >= pred.k;
+    }
+    case "ref": {
+      const def = ctx.suite.definitions?.predicates?.[pred.predicate];
+      if (!def) throw new Error(`Unknown predicate ref: ${pred.predicate}`);
+      return recurse(def, ctx);
+    }
+    default:
+      return leaf(pred, ctx);
+  }
+}
+
+/**
  * Evaluates a predicate against one team member.
  *
  * @param pred - The predicate to evaluate.
@@ -98,25 +130,20 @@ export function evalPredicate(
   member: TeamMember,
   ctx: EvalContext,
 ): boolean {
-  switch (pred.kind) {
-    // Composites
-    case "all":
-      return pred.of.every((p) => evalPredicate(p, member, ctx));
-    case "any":
-      return pred.of.some((p) => evalPredicate(p, member, ctx));
-    case "not":
-      return !evalPredicate(pred.of, member, ctx);
-    case "atLeastK": {
-      let k = 0;
-      for (const p of pred.of) if (evalPredicate(p, member, ctx)) k++;
-      return k >= pred.k;
-    }
-    case "ref": {
-      const def = ctx.suite.definitions?.predicates?.[pred.predicate];
-      if (!def) throw new Error(`Unknown predicate ref: ${pred.predicate}`);
-      return evalPredicate(def, member, ctx);
-    }
+  return evalComposite(
+    pred,
+    ctx,
+    (p, c) => evalPredicate(p, member, c),
+    (p, c) => evalLeafPredicate(p, member, c),
+  );
+}
 
+function evalLeafPredicate(
+  pred: Predicate,
+  member: TeamMember,
+  ctx: EvalContext,
+): boolean {
+  switch (pred.kind) {
     // Identity atoms
     case "species":
       return evalIsIn(member.species, pred);
@@ -191,18 +218,15 @@ export function evalPredicate(
         if (!src) return false;
         return evalSource(src, member, { typeEffectiveness });
       }
-      if (pred.moveTag != null) {
-        const src = interactions.moveTagImmunities?.[pred.moveTag];
+      // `moveTag` (a class like "fissure") and `move` (a literal move id)
+      // resolve through the same data — each entry already carries its own
+      // type-immunity via `typeImmuneToMove`, so there's nothing else to
+      // inject here.
+      const key = pred.moveTag ?? pred.move;
+      if (key != null) {
+        const src = interactions.moveTagImmunities?.[key];
         if (!src) return false;
-        const moveTypes = MOVE_TAG_TYPES[pred.moveTag] ?? [];
-        return evalSource(src, member, { typeEffectiveness, moveTypes });
-      }
-      if (pred.move != null) {
-        const src = interactions.moveTagImmunities?.[pred.move];
-        if (!src) return false;
-        const moveData = gen9.moves.get(pred.move);
-        const moveTypes = moveData?.exists ? [moveData.type.toLowerCase()] : [];
-        return evalSource(src, member, { typeEffectiveness, moveTypes });
+        return evalSource(src, member, { typeEffectiveness });
       }
       return false;
     }
@@ -389,5 +413,16 @@ export function evalPredicate(
     case "foulPlay":
       // Reserved atom — always false until a battle-AI backend is wired up.
       return false;
+
+    // Composites are dispatched by evalComposite before reaching this
+    // function — listed only so the switch stays exhaustive over Predicate.
+    case "all":
+    case "any":
+    case "not":
+    case "atLeastK":
+    case "ref":
+      throw new Error(
+        `evalLeafPredicate received composite kind "${pred.kind}"`,
+      );
   }
 }

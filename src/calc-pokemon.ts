@@ -67,6 +67,22 @@ function toCalcPokemonOptions(input: CalcPokemonInputs) {
   };
 }
 
+// Pokemon construction is pure given (threatSpec, variation) / (member,
+// withTera) — nothing mutates a built Pokemon's fields afterward — and the
+// same threat/variation/member object is resolved repeatedly across a
+// coverage assertion's per-member loop (the threat is identical for every
+// team member checked against one group element). Caching by object
+// identity (WeakMap, so entries are collected once the suite run's threat
+// objects go out of scope) avoids rebuilding the same Pokemon on every call.
+const calcPokemonCache = new WeakMap<
+  ThreatSpec,
+  { base?: Pokemon; byVariation?: WeakMap<Variation, Pokemon> }
+>();
+const memberPokemonCache = new WeakMap<
+  TeamMember,
+  { plain?: Pokemon; tera?: Pokemon }
+>();
+
 /**
  * Builds a @smogon/calc `Pokemon` for a {@link ThreatSpec}, optionally
  * overlaid with a board-state {@link Variation} (e.g. "after Intimidate").
@@ -80,6 +96,19 @@ export function buildCalcPokemon(
   threatSpec: ThreatSpec,
   resolvedVariation?: Variation | null,
 ): Pokemon {
+  let entry = calcPokemonCache.get(threatSpec);
+  if (!entry) {
+    entry = {};
+    calcPokemonCache.set(threatSpec, entry);
+  }
+  if (!resolvedVariation) {
+    if (entry.base) return entry.base;
+  } else {
+    entry.byVariation ??= new WeakMap();
+    const cached = entry.byVariation.get(resolvedVariation);
+    if (cached) return cached;
+  }
+
   const base: ThreatSpec = { ...threatSpec };
 
   if (resolvedVariation) {
@@ -91,7 +120,7 @@ export function buildCalcPokemon(
       base.field = { ...(base.field ?? {}), ...resolvedVariation.field };
   }
 
-  return new Pokemon(calcGen9, base.species, {
+  const pokemon = new Pokemon(calcGen9, base.species, {
     ...toCalcPokemonOptions({
       level: base.level,
       ability: base.ability,
@@ -104,6 +133,10 @@ export function buildCalcPokemon(
     }),
     boosts: base.boosts,
   });
+
+  if (!resolvedVariation) entry.base = pokemon;
+  else entry.byVariation!.set(resolvedVariation, pokemon);
+  return pokemon;
 }
 
 /**
@@ -116,7 +149,16 @@ export function buildMemberPokemon(
   member: TeamMember,
   opts: { withTera?: boolean } = {},
 ): Pokemon {
-  return new Pokemon(
+  const withTera = Boolean(opts.withTera);
+  let entry = memberPokemonCache.get(member);
+  if (!entry) {
+    entry = {};
+    memberPokemonCache.set(member, entry);
+  }
+  const cached = withTera ? entry.tera : entry.plain;
+  if (cached) return cached;
+
+  const pokemon = new Pokemon(
     calcGen9,
     member.species,
     toCalcPokemonOptions({
@@ -127,9 +169,13 @@ export function buildMemberPokemon(
       evs: member.evs,
       ivs: member.ivs,
       teraType: member.teraType,
-      isTera: Boolean(opts.withTera),
+      isTera: withTera,
     }),
   );
+
+  if (withTera) entry.tera = pokemon;
+  else entry.plain = pokemon;
+  return pokemon;
 }
 
 function toCalcWeather(w: FieldSpec["weather"]): CalcWeather | undefined {
@@ -200,9 +246,14 @@ function pickRoll(rolls: number[], roll: DamageRoll): number {
 /**
  * Runs a single damage calculation and returns the total damage across
  * `hits` hits, using the requested roll. Returns `null` if the move name is
- * invalid or the calc itself throws — callers treat that as "this combo
- * doesn't apply" rather than a hard failure, so a single bad move/threat
- * doesn't abort the whole evaluation.
+ * invalid — callers treat that as "this combo doesn't apply" rather than a
+ * hard failure, so a single bad move/threat doesn't abort the whole
+ * evaluation. A failure in `calculate()` itself is different: by this point
+ * the move is real and the Pokemon/Field were built by this module from
+ * already-valid data, so a throw here means a bug in our own construction
+ * code, not bad suite input — it's logged rather than silently treated the
+ * same as an invalid move id, since every caller already maps a `null`
+ * result to an unremarkable "no effect" with no further diagnostic.
  *
  * @param roll - Which damage roll to use: the guaranteed minimum, the
  *   worst-case maximum, or the average of all 16 rolls.
@@ -223,10 +274,17 @@ export function calcTotalDamage(
   const move = tryOrNull(() => new Move(calcGen9, moveId, moveOpts));
   if (!move) return null;
 
-  const result = tryOrNull(() =>
-    calculate(calcGen9, attacker, defender, move, field),
-  );
-  if (!result) return null;
+  let result: Result;
+  try {
+    result = calculate(calcGen9, attacker, defender, move, field);
+  } catch (err) {
+    console.error(
+      `vgc-team-tests: @smogon/calc.calculate() threw for move "${moveId}" — ` +
+        `this points to a bug in buildCalcPokemon/buildCalcField, not bad ` +
+        `suite input: ${(err as Error).message}`,
+    );
+    return null;
+  }
 
   const rolls = getDamageRolls(result.damage);
   if (!rolls.length) return null;

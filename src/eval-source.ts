@@ -9,18 +9,16 @@
  *   { item: [ids] }           member holds one of these items
  *   { move: [ids] }           member knows one of these moves
  *   { grounded: true }        member is grounded
- *   { typeImmuneToMove: true } member's typing is immune to any of opts.moveTypes
+ *   { typeImmuneToMove: type|[types] } member's typing is immune to any of these attack types
  *   { weather: name }         battle weather (not checkable without state → false)
  */
 import { memberTypes } from "./team-member.js";
 import type { SourceNode, TeamMember } from "./types.js";
 
-/** Options threaded through {@link evalSource} for the `typeImmuneToMove` node. */
+/** Options threaded through {@link evalSource} for type-aware checks. */
 export interface EvalSourceOpts {
   /** Type-effectiveness function, injected to avoid a hard dependency on type-chart.ts. */
   typeEffectiveness?: (type: string, defenderTypes: string[]) => number;
-  /** Attack type(s) this check applies to. The member is immune if its typing blocks any one of them. */
-  moveTypes?: string[];
 }
 
 /**
@@ -74,9 +72,10 @@ export function evalSource(
     return node.grounded ? isGrounded : !isGrounded;
   }
 
-  if (node.typeImmuneToMove) {
-    if (!opts.moveTypes?.length || !opts.typeEffectiveness) return false;
-    return opts.moveTypes.some(
+  if (node.typeImmuneToMove != null) {
+    if (!opts.typeEffectiveness) return false;
+    const moveTypes = ([] as string[]).concat(node.typeImmuneToMove);
+    return moveTypes.some(
       (moveType) =>
         opts.typeEffectiveness!(moveType, member._types ?? []) === 0,
     );

@@ -419,7 +419,8 @@ export interface SourceNode {
   item?: string[];
   move?: string[];
   grounded?: boolean;
-  typeImmuneToMove?: boolean;
+  /** Attack type(s) this entry's type-immunity check applies to, e.g. `"ground"` for Fissure. */
+  typeImmuneToMove?: string | string[];
   weather?: string;
 }
 
