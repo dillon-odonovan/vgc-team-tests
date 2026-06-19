@@ -9,7 +9,7 @@
  *   { item: [ids] }           member holds one of these items
  *   { move: [ids] }           member knows one of these moves
  *   { grounded: true }        member is grounded
- *   { typeImmuneToMove: true } member's typing is immune to opts.moveType
+ *   { typeImmuneToMove: true } member's typing is immune to any of opts.moveTypes
  *   { weather: name }         battle weather (not checkable without state → false)
  */
 import { memberTypes } from "./team-member.js";
@@ -19,8 +19,14 @@ import type { SourceNode, TeamMember } from "./types.js";
 export interface EvalSourceOpts {
   /** Type-effectiveness function, injected to avoid a hard dependency on type-chart.ts. */
   typeEffectiveness?: (type: string, defenderTypes: string[]) => number;
-  /** The type to use for typeImmuneToMove checks (e.g. 'ground' for Fissure / ohko). */
-  moveType?: string | null;
+  /**
+   * The attack type(s) that can trigger this moveTag, e.g. `['ground',
+   * 'normal', 'ice']` for `ohko` (Fissure, Horn Drill/Guillotine, Sheer
+   * Cold respectively — a single moveTag can map to several real moves of
+   * different types). The member is immune if its typing blocks ANY one of
+   * these types — it doesn't need to be immune to all of them.
+   */
+  moveTypes?: string[];
 }
 
 /**
@@ -75,9 +81,11 @@ export function evalSource(
   }
 
   if (node.typeImmuneToMove) {
-    if (!opts.moveType || !opts.typeEffectiveness) return false;
-    const mult = opts.typeEffectiveness(opts.moveType, member._types ?? []);
-    return mult === 0;
+    if (!opts.moveTypes?.length || !opts.typeEffectiveness) return false;
+    return opts.moveTypes.some(
+      (moveType) =>
+        opts.typeEffectiveness!(moveType, member._types ?? []) === 0,
+    );
   }
 
   if (node.weather) {
