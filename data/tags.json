@@ -2,164 +2,275 @@
   "$comment": "Semantic taxonomy: canonical Showdown id -> tags (+ facets). THIS is where meta-specific 'what counts as X' knowledge lives, decoupled from the schema. The `tagged` atom reads it. Seeded from standard competitive categorizations (protect moves, priority moves, redirection, hazard control, setup, choice items, and so on). Edit freely as the meta evolves — no schema change needed. Facets: speed_control moves carry `speedControlKind`.",
   "version": "2026-05",
   "moves": {
-    "tailwind":      { "tags": ["speed_control", "support", "status"], "speedControlKind": "tailwind" },
-    "trickroom":     { "tags": ["speed_control", "room", "status", "disruption"], "speedControlKind": "trick_room" },
-    "thunderwave":   { "tags": ["speed_control", "status"], "speedControlKind": "paralysis" },
-    "nuzzle":        { "tags": ["speed_control", "priority", "damaging"], "speedControlKind": "paralysis" },
-    "icywind":       { "tags": ["speed_control", "spread", "damaging"], "speedControlKind": "lower_speed" },
-    "electroweb":    { "tags": ["speed_control", "spread", "damaging"], "speedControlKind": "lower_speed" },
-    "bulldoze":      { "tags": ["speed_control", "spread", "damaging"], "speedControlKind": "lower_speed" },
-    "rocktomb":      { "tags": ["speed_control", "damaging"], "speedControlKind": "lower_speed" },
-    "scaryface":     { "tags": ["speed_control", "status"], "speedControlKind": "lower_speed" },
-    "stringshot":    { "tags": ["speed_control", "spread", "status"], "speedControlKind": "lower_speed" },
-    "glaciate":      { "tags": ["speed_control", "spread", "damaging"], "speedControlKind": "lower_speed" },
+    "tailwind": {
+      "tags": ["speed_control", "support", "status"],
+      "speedControlKind": "tailwind"
+    },
+    "trickroom": {
+      "tags": ["speed_control", "room", "status", "disruption"],
+      "speedControlKind": "trick_room"
+    },
+    "thunderwave": {
+      "tags": ["speed_control", "status"],
+      "speedControlKind": "paralysis"
+    },
+    "nuzzle": {
+      "tags": ["speed_control", "priority", "damaging"],
+      "speedControlKind": "paralysis"
+    },
+    "icywind": {
+      "tags": ["speed_control", "spread", "damaging"],
+      "speedControlKind": "lower_speed"
+    },
+    "electroweb": {
+      "tags": ["speed_control", "spread", "damaging"],
+      "speedControlKind": "lower_speed"
+    },
+    "bulldoze": {
+      "tags": ["speed_control", "spread", "damaging"],
+      "speedControlKind": "lower_speed"
+    },
+    "rocktomb": {
+      "tags": ["speed_control", "damaging"],
+      "speedControlKind": "lower_speed"
+    },
+    "scaryface": {
+      "tags": ["speed_control", "status"],
+      "speedControlKind": "lower_speed"
+    },
+    "stringshot": {
+      "tags": ["speed_control", "spread", "status"],
+      "speedControlKind": "lower_speed"
+    },
+    "glaciate": {
+      "tags": ["speed_control", "spread", "damaging"],
+      "speedControlKind": "lower_speed"
+    },
 
-    "protect":        { "tags": ["protect", "positioning"] },
-    "detect":         { "tags": ["protect", "positioning"] },
-    "banefulbunker":  { "tags": ["protect", "positioning"] },
-    "spikyshield":    { "tags": ["protect", "positioning"] },
-    "kingsshield":    { "tags": ["protect", "positioning"] },
-    "silktrap":       { "tags": ["protect", "positioning"] },
-    "burningbulwark":  { "tags": ["protect", "positioning"] },
-    "wideguard":      { "tags": ["protect", "spread_block", "positioning"] },
-    "quickguard":     { "tags": ["protect", "priority_block", "positioning"] },
+    "protect": { "tags": ["protect", "positioning"] },
+    "detect": { "tags": ["protect", "positioning"] },
+    "banefulbunker": { "tags": ["protect", "positioning"] },
+    "spikyshield": { "tags": ["protect", "positioning"] },
+    "kingsshield": { "tags": ["protect", "positioning"] },
+    "silktrap": { "tags": ["protect", "positioning"] },
+    "burningbulwark": { "tags": ["protect", "positioning"] },
+    "wideguard": { "tags": ["protect", "spread_block", "positioning"] },
+    "quickguard": { "tags": ["protect", "priority_block", "positioning"] },
 
-    "fakeout":       { "tags": ["fake_out", "priority", "flinch", "disruption"] },
-    "followme":      { "tags": ["redirection", "support"] },
-    "ragepowder":    { "tags": ["redirection", "powder", "support"] },
-    "spotlight":     { "tags": ["redirection", "support"] },
+    "fakeout": { "tags": ["fake_out", "priority", "flinch", "disruption"] },
+    "followme": { "tags": ["redirection", "support"] },
+    "ragepowder": { "tags": ["redirection", "powder", "support"] },
+    "spotlight": { "tags": ["redirection", "support"] },
 
-    "taunt":         { "tags": ["taunt", "disruption", "status"] },
-    "encore":        { "tags": ["disruption", "status"] },
-    "disable":       { "tags": ["disruption", "status"] },
-    "haze":          { "tags": ["disruption", "status", "boost_reset"] },
-    "clearsmog":     { "tags": ["disruption", "damaging", "boost_reset"] },
-    "trick":         { "tags": ["disruption", "item_control"] },
-    "switcheroo":    { "tags": ["disruption", "item_control"] },
-    "knockoff":      { "tags": ["disruption", "item_control", "damaging"] },
+    "taunt": { "tags": ["taunt", "disruption", "status"] },
+    "encore": { "tags": ["disruption", "status"] },
+    "disable": { "tags": ["disruption", "status"] },
+    "haze": { "tags": ["disruption", "status", "boost_reset"] },
+    "clearsmog": { "tags": ["disruption", "damaging", "boost_reset"] },
+    "trick": { "tags": ["disruption", "item_control"] },
+    "switcheroo": { "tags": ["disruption", "item_control"] },
+    "knockoff": { "tags": ["disruption", "item_control", "damaging"] },
 
-    "swordsdance":   { "tags": ["setup", "status", "boost_offense"] },
-    "dragondance":   { "tags": ["setup", "status", "boost_offense", "boost_speed"] },
-    "nastyplot":     { "tags": ["setup", "status", "boost_offense"] },
-    "calmmind":      { "tags": ["setup", "status", "boost_offense", "boost_defense"] },
-    "bulkup":        { "tags": ["setup", "status", "boost_offense", "boost_defense"] },
-    "irondefense":   { "tags": ["setup", "status", "boost_defense"] },
-    "agility":       { "tags": ["setup", "status", "boost_speed"] },
-    "shellsmash":    { "tags": ["setup", "status", "boost_offense", "boost_speed"] },
-    "quiverdance":   { "tags": ["setup", "status", "boost_offense", "boost_speed"] },
-    "tidyup":        { "tags": ["setup", "hazard_removal", "boost_offense", "boost_speed"] },
-    "victorydance":  { "tags": ["setup", "status", "boost_offense", "boost_speed"] },
+    "swordsdance": { "tags": ["setup", "status", "boost_offense"] },
+    "dragondance": {
+      "tags": ["setup", "status", "boost_offense", "boost_speed"]
+    },
+    "nastyplot": { "tags": ["setup", "status", "boost_offense"] },
+    "calmmind": {
+      "tags": ["setup", "status", "boost_offense", "boost_defense"]
+    },
+    "bulkup": { "tags": ["setup", "status", "boost_offense", "boost_defense"] },
+    "irondefense": { "tags": ["setup", "status", "boost_defense"] },
+    "agility": { "tags": ["setup", "status", "boost_speed"] },
+    "shellsmash": {
+      "tags": ["setup", "status", "boost_offense", "boost_speed"]
+    },
+    "quiverdance": {
+      "tags": ["setup", "status", "boost_offense", "boost_speed"]
+    },
+    "tidyup": {
+      "tags": ["setup", "hazard_removal", "boost_offense", "boost_speed"]
+    },
+    "victorydance": {
+      "tags": ["setup", "status", "boost_offense", "boost_speed"]
+    },
 
-    "rapidspin":     { "tags": ["hazard_removal", "damaging", "boost_speed"] },
-    "mortalspin":    { "tags": ["hazard_removal", "damaging"] },
-    "defog":         { "tags": ["hazard_removal", "status"] },
+    "rapidspin": { "tags": ["hazard_removal", "damaging", "boost_speed"] },
+    "mortalspin": { "tags": ["hazard_removal", "damaging"] },
+    "defog": { "tags": ["hazard_removal", "status"] },
 
-    "stealthrock":   { "tags": ["hazard_setting"] },
-    "spikes":        { "tags": ["hazard_setting"] },
-    "toxicspikes":   { "tags": ["hazard_setting"] },
-    "stickyweb":     { "tags": ["hazard_setting", "speed_control"], "speedControlKind": "lower_speed" },
+    "stealthrock": { "tags": ["hazard_setting"] },
+    "spikes": { "tags": ["hazard_setting"] },
+    "toxicspikes": { "tags": ["hazard_setting"] },
+    "stickyweb": {
+      "tags": ["hazard_setting", "speed_control"],
+      "speedControlKind": "lower_speed"
+    },
 
-    "extremespeed":  { "tags": ["priority", "damaging"] },
-    "feint":         { "tags": ["priority", "damaging", "protect_break"] },
-    "accelerock":    { "tags": ["priority", "damaging"] },
-    "aquajet":       { "tags": ["priority", "damaging"] },
-    "bulletpunch":   { "tags": ["priority", "damaging"] },
-    "iceshard":      { "tags": ["priority", "damaging"] },
-    "machpunch":     { "tags": ["priority", "damaging"] },
-    "shadowsneak":   { "tags": ["priority", "damaging"] },
-    "suckerpunch":   { "tags": ["priority", "damaging"] },
-    "thunderclap":   { "tags": ["priority", "damaging"] },
-    "vacuumwave":    { "tags": ["priority", "damaging"] },
+    "extremespeed": { "tags": ["priority", "damaging"] },
+    "feint": { "tags": ["priority", "damaging", "protect_break"] },
+    "accelerock": { "tags": ["priority", "damaging"] },
+    "aquajet": { "tags": ["priority", "damaging"] },
+    "bulletpunch": { "tags": ["priority", "damaging"] },
+    "iceshard": { "tags": ["priority", "damaging"] },
+    "machpunch": { "tags": ["priority", "damaging"] },
+    "shadowsneak": { "tags": ["priority", "damaging"] },
+    "suckerpunch": { "tags": ["priority", "damaging"] },
+    "thunderclap": { "tags": ["priority", "damaging"] },
+    "vacuumwave": { "tags": ["priority", "damaging"] },
     "watershuriken": { "tags": ["priority", "damaging"] },
-    "grassyglide":   { "tags": ["priority", "damaging"] },
-    "jetpunch":      { "tags": ["priority", "damaging"] },
-    "upperhand":     { "tags": ["priority", "damaging", "disruption"] },
-    "quickattack":   { "tags": ["priority", "damaging"] },
+    "grassyglide": { "tags": ["priority", "damaging"] },
+    "jetpunch": { "tags": ["priority", "damaging"] },
+    "upperhand": { "tags": ["priority", "damaging", "disruption"] },
+    "quickattack": { "tags": ["priority", "damaging"] },
 
-    "spore":         { "tags": ["sleep", "powder", "status"] },
-    "sleeppowder":   { "tags": ["sleep", "powder", "status"] },
-    "stunspore":     { "tags": ["powder", "status"], "speedControlKind": "paralysis" },
-    "poisonpowder":  { "tags": ["powder", "status"] },
-    "cottonspore":   { "tags": ["powder", "speed_control", "status"], "speedControlKind": "lower_speed" },
-    "magicpowder":   { "tags": ["powder", "status"] },
-    "powder":        { "tags": ["powder", "status"] },
-    "hypnosis":      { "tags": ["sleep", "status"] },
-    "yawn":          { "tags": ["sleep", "status"] },
+    "spore": { "tags": ["sleep", "powder", "status"] },
+    "sleeppowder": { "tags": ["sleep", "powder", "status"] },
+    "stunspore": {
+      "tags": ["powder", "status"],
+      "speedControlKind": "paralysis"
+    },
+    "poisonpowder": { "tags": ["powder", "status"] },
+    "cottonspore": {
+      "tags": ["powder", "speed_control", "status"],
+      "speedControlKind": "lower_speed"
+    },
+    "magicpowder": { "tags": ["powder", "status"] },
+    "powder": { "tags": ["powder", "status"] },
+    "hypnosis": { "tags": ["sleep", "status"] },
+    "yawn": { "tags": ["sleep", "status"] },
 
-    "uturn":          { "tags": ["pivot", "damaging"] },
-    "voltswitch":     { "tags": ["pivot", "damaging"] },
-    "flipturn":       { "tags": ["pivot", "damaging"] },
-    "partingshot":    { "tags": ["pivot", "status", "disruption"] },
-    "teleport":       { "tags": ["pivot", "status"] },
+    "uturn": { "tags": ["pivot", "damaging"] },
+    "voltswitch": { "tags": ["pivot", "damaging"] },
+    "flipturn": { "tags": ["pivot", "damaging"] },
+    "partingshot": { "tags": ["pivot", "status", "disruption"] },
+    "teleport": { "tags": ["pivot", "status"] },
     "chillyreception": { "tags": ["pivot", "status", "weather_setting"] },
 
-    "helpinghand":   { "tags": ["support", "priority"] },
-    "lifedew":       { "tags": ["recovery", "support"] },
+    "helpinghand": { "tags": ["support", "priority"] },
+    "lifedew": { "tags": ["recovery", "support"] },
     "junglehealing": { "tags": ["recovery", "support", "status_cure"] },
-    "pollenpuff":    { "tags": ["support", "recovery", "damaging"] }
+    "pollenpuff": { "tags": ["support", "recovery", "damaging"] }
   },
   "items": {
-    "choicescarf":   { "tags": ["choice", "speed_mod"], "speedMult": 1.5 },
-    "choiceband":    { "tags": ["choice", "power_mod"] },
-    "choicespecs":   { "tags": ["choice", "power_mod"] },
-    "assaultvest":   { "tags": ["bulk", "boost_spd"] },
-    "focussash":     { "tags": ["survival"], "grantsImmunity": ["ohko"] },
-    "safetygoggles": { "tags": ["powder_immune", "weather_immune"], "grantsImmunity": ["powder", "weather_chip"] },
-    "covertcloak":   { "tags": ["secondary_immune"], "grantsImmunity": ["secondary_effects"] },
-    "clearamulet":   { "tags": ["stat_drop_immune"], "grantsImmunity": ["intimidate", "stat_drops"] },
-    "mentalherb":    { "tags": ["taunt_immune"], "grantsImmunity": ["taunt"] },
-    "airballoon":    { "tags": ["ground_immune"], "grantsImmunity": ["ground"] },
-    "lumberry":      { "tags": ["status_cure"] },
-    "sitrusberry":   { "tags": ["recovery"] },
-    "leftovers":     { "tags": ["recovery"] },
-    "rockyhelmet":   { "tags": ["contact_punish"] },
+    "choicescarf": { "tags": ["choice", "speed_mod"], "speedMult": 1.5 },
+    "choiceband": { "tags": ["choice", "power_mod"] },
+    "choicespecs": { "tags": ["choice", "power_mod"] },
+    "assaultvest": { "tags": ["bulk", "boost_spd"] },
+    "focussash": { "tags": ["survival"], "grantsImmunity": ["ohko"] },
+    "safetygoggles": {
+      "tags": ["powder_immune", "weather_immune"],
+      "grantsImmunity": ["powder", "weather_chip"]
+    },
+    "covertcloak": {
+      "tags": ["secondary_immune"],
+      "grantsImmunity": ["secondary_effects"]
+    },
+    "clearamulet": {
+      "tags": ["stat_drop_immune"],
+      "grantsImmunity": ["intimidate", "stat_drops"]
+    },
+    "mentalherb": { "tags": ["taunt_immune"], "grantsImmunity": ["taunt"] },
+    "airballoon": { "tags": ["ground_immune"], "grantsImmunity": ["ground"] },
+    "lumberry": { "tags": ["status_cure"] },
+    "sitrusberry": { "tags": ["recovery"] },
+    "leftovers": { "tags": ["recovery"] },
+    "rockyhelmet": { "tags": ["contact_punish"] },
     "boosterenergy": { "tags": ["paradox", "speed_mod"] },
-    "shedshell":     { "tags": ["trapping_immune"], "grantsImmunity": ["trapping"] }
+    "shedshell": { "tags": ["trapping_immune"], "grantsImmunity": ["trapping"] }
   },
   "abilities": {
-    "intimidate":    { "tags": ["intimidate", "attack_drop", "pivot_support"] },
-    "prankster":     { "tags": ["priority_status"] },
-    "levitate":      { "tags": ["ground_immune"], "grantsImmunity": ["ground"] },
-    "overcoat":      { "tags": ["powder_immune", "weather_immune"], "grantsImmunity": ["powder", "weather_chip"] },
-    "sturdy":        { "tags": ["survival", "ohko_immune"], "grantsImmunity": ["ohko"] },
-    "magicguard":    { "tags": ["chip_immune"], "grantsImmunity": ["weather_chip"] },
-    "clearbody":     { "tags": ["stat_drop_immune"], "grantsImmunity": ["intimidate"] },
-    "whitesmoke":    { "tags": ["stat_drop_immune"], "grantsImmunity": ["intimidate"] },
-    "fullmetalbody": { "tags": ["stat_drop_immune"], "grantsImmunity": ["intimidate"] },
-    "hypercutter":   { "tags": ["attack_drop_immune"], "grantsImmunity": ["intimidate"] },
-    "innerfocus":    { "tags": ["intimidate_immune", "flinch_immune"], "grantsImmunity": ["intimidate"] },
-    "oblivious":     { "tags": ["intimidate_immune"], "grantsImmunity": ["intimidate", "taunt"] },
-    "owntempo":      { "tags": ["intimidate_immune"], "grantsImmunity": ["intimidate"] },
-    "scrappy":       { "tags": ["intimidate_immune"], "grantsImmunity": ["intimidate"] },
-    "guarddog":      { "tags": ["intimidate_immune", "intimidate_punish"], "grantsImmunity": ["intimidate"] },
-    "goodasgold":    { "tags": ["status_move_immune"], "grantsImmunity": ["status_moves"] },
-    "sapsipper":     { "tags": ["type_immune", "intimidate_bait"], "grantsImmunity": ["grass"] },
-    "lightningrod":  { "tags": ["type_immune", "redirection"], "grantsImmunity": ["electric"] },
-    "voltabsorb":    { "tags": ["type_immune"], "grantsImmunity": ["electric"] },
-    "stormdrain":    { "tags": ["type_immune", "redirection"], "grantsImmunity": ["water"] },
-    "waterabsorb":   { "tags": ["type_immune"], "grantsImmunity": ["water"] },
-    "flashfire":     { "tags": ["type_immune"], "grantsImmunity": ["fire"] },
+    "intimidate": { "tags": ["intimidate", "attack_drop", "pivot_support"] },
+    "prankster": { "tags": ["priority_status"] },
+    "levitate": { "tags": ["ground_immune"], "grantsImmunity": ["ground"] },
+    "overcoat": {
+      "tags": ["powder_immune", "weather_immune"],
+      "grantsImmunity": ["powder", "weather_chip"]
+    },
+    "sturdy": {
+      "tags": ["survival", "ohko_immune"],
+      "grantsImmunity": ["ohko"]
+    },
+    "magicguard": {
+      "tags": ["chip_immune"],
+      "grantsImmunity": ["weather_chip"]
+    },
+    "clearbody": {
+      "tags": ["stat_drop_immune"],
+      "grantsImmunity": ["intimidate"]
+    },
+    "whitesmoke": {
+      "tags": ["stat_drop_immune"],
+      "grantsImmunity": ["intimidate"]
+    },
+    "fullmetalbody": {
+      "tags": ["stat_drop_immune"],
+      "grantsImmunity": ["intimidate"]
+    },
+    "hypercutter": {
+      "tags": ["attack_drop_immune"],
+      "grantsImmunity": ["intimidate"]
+    },
+    "innerfocus": {
+      "tags": ["intimidate_immune", "flinch_immune"],
+      "grantsImmunity": ["intimidate"]
+    },
+    "oblivious": {
+      "tags": ["intimidate_immune"],
+      "grantsImmunity": ["intimidate", "taunt"]
+    },
+    "owntempo": {
+      "tags": ["intimidate_immune"],
+      "grantsImmunity": ["intimidate"]
+    },
+    "scrappy": {
+      "tags": ["intimidate_immune"],
+      "grantsImmunity": ["intimidate"]
+    },
+    "guarddog": {
+      "tags": ["intimidate_immune", "intimidate_punish"],
+      "grantsImmunity": ["intimidate"]
+    },
+    "goodasgold": {
+      "tags": ["status_move_immune"],
+      "grantsImmunity": ["status_moves"]
+    },
+    "sapsipper": {
+      "tags": ["type_immune", "intimidate_bait"],
+      "grantsImmunity": ["grass"]
+    },
+    "lightningrod": {
+      "tags": ["type_immune", "redirection"],
+      "grantsImmunity": ["electric"]
+    },
+    "voltabsorb": { "tags": ["type_immune"], "grantsImmunity": ["electric"] },
+    "stormdrain": {
+      "tags": ["type_immune", "redirection"],
+      "grantsImmunity": ["water"]
+    },
+    "waterabsorb": { "tags": ["type_immune"], "grantsImmunity": ["water"] },
+    "flashfire": { "tags": ["type_immune"], "grantsImmunity": ["fire"] },
     "wellbakedbody": { "tags": ["type_immune"], "grantsImmunity": ["fire"] },
-    "eartheater":    { "tags": ["type_immune"], "grantsImmunity": ["ground"] },
-    "swiftswim":     { "tags": ["speed_mod"] },
-    "chlorophyll":   { "tags": ["speed_mod"] },
-    "sandrush":      { "tags": ["speed_mod"] },
-    "slushrush":     { "tags": ["speed_mod"] },
-    "surgesurfer":   { "tags": ["speed_mod"] },
-    "unburden":      { "tags": ["speed_mod"] },
-    "competitive":   { "tags": ["intimidate_punish", "intimidate_bait"] },
-    "defiant":       { "tags": ["intimidate_punish", "intimidate_bait"] },
-    "grassysurge":   { "tags": ["terrain_setting"] },
+    "eartheater": { "tags": ["type_immune"], "grantsImmunity": ["ground"] },
+    "swiftswim": { "tags": ["speed_mod"] },
+    "chlorophyll": { "tags": ["speed_mod"] },
+    "sandrush": { "tags": ["speed_mod"] },
+    "slushrush": { "tags": ["speed_mod"] },
+    "surgesurfer": { "tags": ["speed_mod"] },
+    "unburden": { "tags": ["speed_mod"] },
+    "competitive": { "tags": ["intimidate_punish", "intimidate_bait"] },
+    "defiant": { "tags": ["intimidate_punish", "intimidate_bait"] },
+    "grassysurge": { "tags": ["terrain_setting"] },
     "electricsurge": { "tags": ["terrain_setting"] },
-    "psychicsurge":  { "tags": ["terrain_setting"] },
-    "mistysurge":    { "tags": ["terrain_setting"] }
+    "psychicsurge": { "tags": ["terrain_setting"] },
+    "mistysurge": { "tags": ["terrain_setting"] }
   },
   "species": {
-    "miraidon":       { "tags": ["restricted"] },
-    "koraidon":       { "tags": ["restricted"] },
-    "calyrexshadow":  { "tags": ["restricted"] },
-    "calyrexice":     { "tags": ["restricted"] },
-    "kyogre":         { "tags": ["restricted"] },
-    "groudon":        { "tags": ["restricted"] }
+    "miraidon": { "tags": ["restricted"] },
+    "koraidon": { "tags": ["restricted"] },
+    "calyrexshadow": { "tags": ["restricted"] },
+    "calyrexice": { "tags": ["restricted"] },
+    "kyogre": { "tags": ["restricted"] },
+    "groudon": { "tags": ["restricted"] }
   }
 }

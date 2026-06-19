@@ -2,7 +2,7 @@
 
 ## The problem
 
-We want to express constraints on a VGC team — *"≥2 Water resists"*, *"2 mons survive Garchomp Dragon Claw"*, *"multiple forms of speed control"*, *"2HKO every top‑10 threat"* — in a form that is **actionable** (a program can check it and say which members pass) yet **flexible** enough to encode higher‑level concepts that evolve with the meta. Today these checks tend to live as one‑off imperative functions scattered across teambuilding scripts (a hand‑rolled "count the Protects", a bespoke type‑coverage loop). This schema generalizes them into a declarative, composable form.
+We want to express constraints on a VGC team — _"≥2 Water resists"_, _"2 mons survive Garchomp Dragon Claw"_, _"multiple forms of speed control"_, _"2HKO every top‑10 threat"_ — in a form that is **actionable** (a program can check it and say which members pass) yet **flexible** enough to encode higher‑level concepts that evolve with the meta. Today these checks tend to live as one‑off imperative functions scattered across teambuilding scripts (a hand‑rolled "count the Protects", a bespoke type‑coverage loop). This schema generalizes them into a declarative, composable form.
 
 ## The structural insight
 
@@ -27,9 +27,9 @@ That gives a three‑layer architecture, and — crucially — pushes the hard, 
 
 **Why this altitude is right**
 
-- *Actionable*: an assertion is a count and a comparison — there is nothing to interpret. Each leaf atom maps to one small function, so the evaluator is a registry of ~25 functions, and a report can name the exact members that passed/failed.
-- *Flexible*: the boolean algebra composes atoms arbitrarily; `coverage` expresses the whole "for every threat / type, the team has an answer" family in one shape; and the **tag taxonomy** lets you say "speed control" or "setup" without ever enumerating moves in a test.
-- *The crux you flagged* — "moves with speed control are hard to codify" — is answered by **not codifying them in the schema**. `tagged(move, speed_control)` defers to `data/tags.json`. When the meta shifts, you edit a data file, not the schema and not any test.
+- _Actionable_: an assertion is a count and a comparison — there is nothing to interpret. Each leaf atom maps to one small function, so the evaluator is a registry of ~25 functions, and a report can name the exact members that passed/failed.
+- _Flexible_: the boolean algebra composes atoms arbitrarily; `coverage` expresses the whole "for every threat / type, the team has an answer" family in one shape; and the **tag taxonomy** lets you say "speed control" or "setup" without ever enumerating moves in a test.
+- _The crux you flagged_ — "moves with speed control are hard to codify" — is answered by **not codifying them in the schema**. `tagged(move, speed_control)` defers to `data/tags.json`. When the meta shifts, you edit a data file, not the schema and not any test.
 
 ## Why knowledge lives in data, not the schema
 
@@ -76,14 +76,14 @@ Tracing three tests from `examples/suites/reg-m-a-baseline.suite.json` against t
 
 Evaluate the per‑member predicate (defensive multiplier of incoming Water):
 
-| member | Water multiplier | ≤ 0.5? |
-|---|---|---|
-| Incineroar (Fire/Dark) | 2× | ✗ |
-| Flutter Mane (Ghost/Fairy) | 1× | ✗ |
-| Amoonguss (Grass/Poison) | 0.5× | ✓ |
-| Garchomp (Dragon/Ground) | 0.5× | ✓ |
-| Rillaboom (Grass) | 0.5× | ✓ |
-| Iron Hands (Fighting/Electric) | 1× | ✗ |
+| member                         | Water multiplier | ≤ 0.5? |
+| ------------------------------ | ---------------- | ------ |
+| Incineroar (Fire/Dark)         | 2×               | ✗      |
+| Flutter Mane (Ghost/Fairy)     | 1×               | ✗      |
+| Amoonguss (Grass/Poison)       | 0.5×             | ✓      |
+| Garchomp (Dragon/Ground)       | 0.5×             | ✓      |
+| Rillaboom (Grass)              | 0.5×             | ✓      |
+| Iron Hands (Fighting/Electric) | 1×               | ✗      |
 
 Count = 3, `3 >= 2` → **pass**, `satisfiedBy = [amoonguss, garchomp, rillaboom]`. (The report shows 2 for brevity; the trace shows the evaluator naming the witnesses.)
 

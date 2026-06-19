@@ -8,7 +8,10 @@
   "additionalProperties": false,
   "properties": {
     "schemaVersion": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
-    "suite": { "type": "string", "description": "Suite name or id that was run." },
+    "suite": {
+      "type": "string",
+      "description": "Suite name or id that was run."
+    },
     "team": {
       "description": "The team under test: an opaque id, or a lightweight slot summary.",
       "oneOf": [
@@ -29,7 +32,10 @@
     },
     "format": { "type": "string", "pattern": "^[a-z0-9]+$" },
     "generatedAt": { "type": "string", "format": "date-time" },
-    "passed": { "type": "boolean", "description": "True iff every error-severity test passed." },
+    "passed": {
+      "type": "boolean",
+      "description": "True iff every error-severity test passed."
+    },
     "summary": {
       "type": "object",
       "additionalProperties": false,
@@ -71,9 +77,15 @@
         "severity": { "type": "string", "enum": ["error", "warn", "info"] },
         "weight": { "type": "number", "minimum": 0 },
         "pass": { "type": "boolean" },
-        "actual": { "type": "number", "description": "The measured count/distinct-count for count-style assertions." },
+        "actual": {
+          "type": "number",
+          "description": "The measured count/distinct-count for count-style assertions."
+        },
         "op": { "$ref": "#/$defs/Op" },
-        "value": { "type": "number", "description": "The threshold compared against." },
+        "value": {
+          "type": "number",
+          "description": "The threshold compared against."
+        },
         "satisfiedBy": {
           "type": "array",
           "description": "Members that satisfied the test's predicate (count/countDistinct/team).",
@@ -87,16 +99,27 @@
             "of": { "type": "string", "enum": ["all", "any"] },
             "atLeast": { "type": "integer", "minimum": 1 },
             "covered": { "type": "array", "items": { "type": "string" } },
-            "uncovered": { "type": "array", "items": { "type": "string" }, "description": "The gap — drives the suggestion button / marilland-style highlighting." },
+            "uncovered": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "The gap — drives the suggestion button / marilland-style highlighting."
+            },
             "byElement": {
               "type": "object",
               "description": "element -> members that handled it.",
-              "additionalProperties": { "type": "array", "items": { "$ref": "#/$defs/MemberRef" } }
+              "additionalProperties": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/MemberRef" }
+              }
             }
           }
         },
         "message": { "type": "string" },
-        "detail": { "type": "object", "additionalProperties": true, "description": "Free-form evaluator detail (e.g. damage rolls, computed speeds)." }
+        "detail": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Free-form evaluator detail (e.g. damage rolls, computed speeds)."
+        }
       }
     }
   }

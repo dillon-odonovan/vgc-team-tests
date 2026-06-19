@@ -5,7 +5,11 @@
   "name": "Speed tiers",
   "definitions": {
     "threats": {
-      "scarf_chomp": { "species": "garchomp", "item": "choicescarf", "set": "usage" }
+      "scarf_chomp": {
+        "species": "garchomp",
+        "item": "choicescarf",
+        "set": "usage"
+      }
     }
   },
   "tests": [
@@ -13,7 +17,18 @@
       "id": "two-faster-than-base-100",
       "title": "At least 2 mons faster than base 100",
       "rationale": "Raw base-speed tier check (vs:'base'), independent of investment.",
-      "assert": { "count": "members", "where": { "kind": "stat", "stat": "spe", "vs": "base", "op": ">", "value": 100 }, "op": ">=", "value": 2 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "stat",
+          "stat": "spe",
+          "vs": "base",
+          "op": ">",
+          "value": 100
+        },
+        "op": ">=",
+        "value": 2
+      }
     },
     {
       "id": "a-scarfer-hits-200-effective",
@@ -25,10 +40,18 @@
           "kind": "all",
           "of": [
             { "kind": "item", "is": "choicescarf" },
-            { "kind": "stat", "stat": "spe", "vs": "final", "mods": ["scarf"], "op": ">=", "value": 200 }
+            {
+              "kind": "stat",
+              "stat": "spe",
+              "vs": "final",
+              "mods": ["scarf"],
+              "op": ">=",
+              "value": 200
+            }
           ]
         },
-        "op": ">=", "value": 1
+        "op": ">=",
+        "value": 1
       }
     },
     {
@@ -36,14 +59,34 @@
       "title": "Something outspeeds Scarf Garchomp",
       "rationale": "outspeeds compares the member's effective Speed to the threat's (the threat applies its own x1.5 scarf). orSpeedTie counts a tie as success.",
       "severity": "warn",
-      "assert": { "count": "members", "where": { "kind": "outspeeds", "threat": "scarf_chomp", "orSpeedTie": true }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "outspeeds",
+          "threat": "scarf_chomp",
+          "orSpeedTie": true
+        },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "trick-room-attacker-present",
       "title": "A slow attacker for Trick Room",
       "rationale": "vs:'final' with no mods; a sub-50 Speed body that wants Trick Room up.",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "stat", "stat": "spe", "vs": "final", "op": "<=", "value": 50 }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "stat",
+          "stat": "spe",
+          "vs": "final",
+          "op": "<=",
+          "value": 50
+        },
+        "op": ">=",
+        "value": 1
+      }
     }
   ]
 }

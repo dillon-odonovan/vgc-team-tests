@@ -27,7 +27,9 @@ function walkJSON(dir) {
 const ajv = new Ajv({ allErrors: true, strict: false });
 addFormats(ajv);
 const suiteSchema = readJSON(join(root, "schema/team-test-suite.schema.json"));
-const reportSchema = readJSON(join(root, "schema/team-test-report.schema.json"));
+const reportSchema = readJSON(
+  join(root, "schema/team-test-report.schema.json"),
+);
 ajv.addSchema(suiteSchema);
 ajv.addSchema(reportSchema);
 
@@ -43,14 +45,19 @@ for (const file of walkJSON(join(root, "examples"))) {
     const data = readJSON(file);
     const validate = isReport ? validateReport : validateSuite;
     const ok = validate(data);
-    assert.ok(ok, `${rel} failed ${isReport ? "report" : "suite"} schema:\n${fmt(validate.errors)}`);
+    assert.ok(
+      ok,
+      `${rel} failed ${isReport ? "report" : "suite"} schema:\n${fmt(validate.errors)}`,
+    );
   });
 }
 
 test("data/threats.json conforms to the suite schema $defs", () => {
   const vThreat = ajv.compile({ $ref: `${suiteSchema.$id}#/$defs/Threat` });
   const vGroup = ajv.compile({ $ref: `${suiteSchema.$id}#/$defs/Group` });
-  const vVariation = ajv.compile({ $ref: `${suiteSchema.$id}#/$defs/Variation` });
+  const vVariation = ajv.compile({
+    $ref: `${suiteSchema.$id}#/$defs/Variation`,
+  });
   const lib = readJSON(join(root, "data/threats.json"));
   for (const [k, v] of Object.entries(lib.threats ?? {}))
     assert.ok(vThreat(v), `threat '${k}':\n${fmt(vThreat.errors)}`);

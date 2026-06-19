@@ -12,14 +12,21 @@ import { dirname, join, resolve } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
 const readJSON = (p) => JSON.parse(readFileSync(p, "utf8"));
-const walkJSON = (dir) => readdirSync(dir).flatMap((e) => {
-  const p = join(dir, e);
-  return statSync(p).isDirectory() ? walkJSON(p) : (e.endsWith(".json") ? [p] : []);
-});
+const walkJSON = (dir) =>
+  readdirSync(dir).flatMap((e) => {
+    const p = join(dir, e);
+    return statSync(p).isDirectory()
+      ? walkJSON(p)
+      : e.endsWith(".json")
+        ? [p]
+        : [];
+  });
 
 const schema = readJSON(join(root, "schema/team-test-suite.schema.json"));
 const expectedKinds = new Set(
-  schema.$defs.Predicate.oneOf.map((b) => b.properties?.kind?.const).filter(Boolean)
+  schema.$defs.Predicate.oneOf
+    .map((b) => b.properties?.kind?.const)
+    .filter(Boolean),
 );
 const expectedShapes = new Set(["count", "countDistinct", "coverage", "team"]);
 
@@ -35,15 +42,25 @@ for (const file of walkJSON(join(root, "examples"))) {
   if (file.endsWith(".report.json")) continue;
   const suite = readJSON(file);
   collect(suite);
-  for (const t of suite.tests ?? []) for (const s of expectedShapes) if (s in (t.assert ?? {})) seenShapes.add(s);
+  for (const t of suite.tests ?? [])
+    for (const s of expectedShapes)
+      if (s in (t.assert ?? {})) seenShapes.add(s);
 }
 
 test("every atom kind in the schema is exercised by an example", () => {
   const missing = [...expectedKinds].filter((k) => !seenKinds.has(k));
-  assert.equal(missing.length, 0, `Atom kinds with no example: ${missing.join(", ")}`);
+  assert.equal(
+    missing.length,
+    0,
+    `Atom kinds with no example: ${missing.join(", ")}`,
+  );
 });
 
 test("every assertion shape is exercised by an example", () => {
   const missing = [...expectedShapes].filter((s) => !seenShapes.has(s));
-  assert.equal(missing.length, 0, `Assertion shapes with no example: ${missing.join(", ")}`);
+  assert.equal(
+    missing.length,
+    0,
+    `Assertion shapes with no example: ${missing.join(", ")}`,
+  );
 });

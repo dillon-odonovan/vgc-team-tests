@@ -62,7 +62,11 @@ export type Name = string;
 /**
  * A named set used by inGroup atoms (species kind) and coverage assertions (threats / values / meta kinds).
  */
-export type Group = SpeciesGroup | ThreatsGroup | MetaThreatsGroup | ValuesGroup;
+export type Group =
+  | SpeciesGroup
+  | ThreatsGroup
+  | MetaThreatsGroup
+  | ValuesGroup;
 export type ThreatRef = Name | Threat;
 /**
  * A boolean expression over a single team member (or, in team scope, existentially over the team). Discriminated by 'kind'.
@@ -162,7 +166,11 @@ export type ImmuneTo = {
 /**
  * The quantifier + threshold. Exactly one of the four shapes.
  */
-export type Assert = CountAssertion | CountDistinctAssertion | CoverageAssertion | TeamAssertion;
+export type Assert =
+  | CountAssertion
+  | CountDistinctAssertion
+  | CoverageAssertion
+  | TeamAssertion;
 
 /**
  * A declarative, composable suite of constraints ('unit tests') for a VGC (doubles, bring-6-choose-4) Pokemon team. Every test reduces to COUNT(members matching a predicate) compared to a threshold; meta-specific knowledge (what is 'speed control', what is immune to 'powder', threat spreads) lives in referenced reference data, not in this schema.

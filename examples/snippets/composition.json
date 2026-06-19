@@ -7,7 +7,20 @@
     "groups": {
       "good_mons": {
         "kind": "species",
-        "members": ["garchomp","amoonguss","incineroar","rillaboom","fluttermane","ironhands","landorustherian","urshifu","dragonite","tornadustherian","chienpao","ursaluna"]
+        "members": [
+          "garchomp",
+          "amoonguss",
+          "incineroar",
+          "rillaboom",
+          "fluttermane",
+          "ironhands",
+          "landorustherian",
+          "urshifu",
+          "dragonite",
+          "tornadustherian",
+          "chienpao",
+          "ursaluna"
+        ]
       }
     }
   },
@@ -16,14 +29,24 @@
       "id": "prioritize-good-mons",
       "title": "At least 4 of 6 from the good-mons allow-list",
       "rationale": "Bias the build toward proven Pokemon.",
-      "assert": { "count": "members", "where": { "kind": "inGroup", "group": "good_mons" }, "op": ">=", "value": 4 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "inGroup", "group": "good_mons" },
+        "op": ">=",
+        "value": 4
+      }
     },
     {
       "id": "must-include-amoonguss",
       "title": "Team includes Amoonguss",
       "rationale": "Literal species requirement (Redirection + Spore backbone).",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "species", "is": "amoonguss" }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "species", "is": "amoonguss" },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "redirection-and-fake-out",

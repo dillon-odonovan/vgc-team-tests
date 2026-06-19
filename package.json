@@ -18,13 +18,18 @@
     "validate": "node --test test/validate-examples.test.mjs",
     "lint:data": "node --test test/data-lint.test.mjs",
     "build:types": "json2ts -i schema/team-test-suite.schema.json -o types/suite.d.ts && json2ts -i schema/team-test-report.schema.json -o types/report.d.ts",
-    "run": "node src/cli.mjs"
+    "run": "node src/cli.mjs",
+    "prepare": "husky",
+    "lint:staged": "lint-staged --config .lintstagedrc"
   },
   "devDependencies": {
     "@pkmn/dex": "^0.10.10",
     "@smogon/calc": "^0.11.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
-    "json-schema-to-typescript": "^15.0.4"
+    "husky": "^9.1.7",
+    "json-schema-to-typescript": "^15.0.4",
+    "lint-staged": "^17.0.7",
+    "prettier": "3.8.4"
   }
 }

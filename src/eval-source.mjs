@@ -18,15 +18,15 @@
  */
 
 export function evalSource(node, member, opts = {}) {
-  if (!node || typeof node !== 'object') return false;
+  if (!node || typeof node !== "object") return false;
 
-  if (node.anyOf) return node.anyOf.some(n => evalSource(n, member, opts));
-  if (node.all)   return node.all.every(n => evalSource(n, member, opts));
+  if (node.anyOf) return node.anyOf.some((n) => evalSource(n, member, opts));
+  if (node.all) return node.all.every((n) => evalSource(n, member, opts));
 
-  if ('type' in node) {
-    const mTypes = (member._types ?? []).map(t => t.toLowerCase());
-    const required = [].concat(node.type).map(t => t.toLowerCase());
-    return required.some(t => mTypes.includes(t));
+  if ("type" in node) {
+    const mTypes = (member._types ?? []).map((t) => t.toLowerCase());
+    const required = [].concat(node.type).map((t) => t.toLowerCase());
+    return required.some((t) => mTypes.includes(t));
   }
 
   if (node.ability) {
@@ -39,14 +39,14 @@ export function evalSource(node, member, opts = {}) {
 
   if (node.move) {
     const moves = member.moves ?? [];
-    return node.move.some(m => moves.includes(m));
+    return node.move.some((m) => moves.includes(m));
   }
 
-  if ('grounded' in node) {
-    const types = (member._types ?? []).map(t => t.toLowerCase());
-    const flying = types.includes('flying');
-    const levitate = member.ability === 'levitate';
-    const airBalloon = member.item === 'airballoon';
+  if ("grounded" in node) {
+    const types = (member._types ?? []).map((t) => t.toLowerCase());
+    const flying = types.includes("flying");
+    const levitate = member.ability === "levitate";
+    const airBalloon = member.item === "airballoon";
     const isGrounded = !flying && !levitate && !airBalloon;
     return node.grounded ? isGrounded : !isGrounded;
   }

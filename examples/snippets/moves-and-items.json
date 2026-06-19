@@ -8,13 +8,23 @@
       "id": "protect-balance",
       "title": "At least 3 Protect-family users",
       "rationale": "tagged(move, protect) covers Protect/Detect/Spiky Shield/Baneful Bunker/etc. without listing them here.",
-      "assert": { "count": "members", "where": { "kind": "tagged", "of": "move", "tag": "protect" }, "op": ">=", "value": 3 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "tagged", "of": "move", "tag": "protect" },
+        "op": ">=",
+        "value": 3
+      }
     },
     {
       "id": "has-a-setup-move",
       "title": "At least one setup move on the team",
       "rationale": "'types of moves (setup) if a move exists on a team' — tagged(move, setup).",
-      "assert": { "count": "members", "where": { "kind": "tagged", "of": "move", "tag": "setup" }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "tagged", "of": "move", "tag": "setup" },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "multiple-forms-of-speed-control",
@@ -23,7 +33,8 @@
       "assert": {
         "countDistinct": "facet:speedControlKind",
         "where": { "kind": "tagged", "of": "move", "tag": "speed_control" },
-        "op": ">=", "value": 2
+        "op": ">=",
+        "value": 2
       }
     },
     {
@@ -31,14 +42,24 @@
       "title": "Someone holds a Lum Berry",
       "rationale": "Literal held-item constraint.",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "item", "is": "lumberry" }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "item", "is": "lumberry" },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "has-taunt",
       "title": "Someone knows Taunt",
       "rationale": "Literal move constraint; `has` = knows this move.",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "move", "has": "taunt" }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "move", "has": "taunt" },
+        "op": ">=",
+        "value": 1
+      }
     }
   ]
 }

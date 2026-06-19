@@ -10,7 +10,12 @@
       "incin_def": { "species": "incineroar", "set": "usage" }
     },
     "groups": {
-      "top10": { "kind": "meta", "from": "usage", "topN": 10, "move": "bestDamaging" }
+      "top10": {
+        "kind": "meta",
+        "from": "usage",
+        "topN": 10,
+        "move": "bestDamaging"
+      }
     }
   },
   "tests": [
@@ -21,7 +26,12 @@
       "assert": {
         "coverage": {
           "group": "top10",
-          "each": { "kind": "koes", "threat": "$each", "hits": 2, "roll": "min" },
+          "each": {
+            "kind": "koes",
+            "threat": "$each",
+            "hits": 2,
+            "roll": "min"
+          },
           "atLeast": 1
         }
       }
@@ -30,14 +40,34 @@
       "id": "ohko-flutter-mane",
       "title": "Someone guarantees an OHKO on Flutter Mane",
       "rationale": "koes hits:1 roll:min = guaranteed KO even on the low roll.",
-      "assert": { "count": "members", "where": { "kind": "koes", "threat": "flutter_def", "hits": 1, "roll": "min" }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "koes",
+          "threat": "flutter_def",
+          "hits": 1,
+          "roll": "min"
+        },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "pressure-incineroar",
       "title": "Someone deals >=50% to Incineroar",
       "rationale": "Finer than a KO check: dealsDamage with a fraction threshold on the low roll.",
       "severity": "warn",
-      "assert": { "count": "members", "where": { "kind": "dealsDamage", "threat": "incin_def", "roll": "min", "fraction": { "op": ">=", "value": 0.5 } }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "dealsDamage",
+          "threat": "incin_def",
+          "roll": "min",
+          "fraction": { "op": ">=", "value": 0.5 }
+        },
+        "op": ">=",
+        "value": 1
+      }
     }
   ]
 }

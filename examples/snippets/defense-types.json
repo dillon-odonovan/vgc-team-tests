@@ -8,7 +8,26 @@
       "all_types": {
         "kind": "values",
         "valueType": "type",
-        "members": ["normal","fire","water","electric","grass","ice","fighting","poison","ground","flying","psychic","bug","rock","ghost","dragon","dark","steel","fairy"]
+        "members": [
+          "normal",
+          "fire",
+          "water",
+          "electric",
+          "grass",
+          "ice",
+          "fighting",
+          "poison",
+          "ground",
+          "flying",
+          "psychic",
+          "bug",
+          "rock",
+          "ghost",
+          "dragon",
+          "dark",
+          "steel",
+          "fairy"
+        ]
       }
     }
   },
@@ -17,19 +36,46 @@
       "id": "at-least-one-water-resist",
       "title": "At least one Water resist",
       "rationale": "Defensive multiplier of incoming Water <= 0.5x (a resist) on >=1 member.",
-      "assert": { "count": "members", "where": { "kind": "typeEffectiveness", "role": "defending", "vsType": "water", "op": "<=", "value": 0.5 }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "typeEffectiveness",
+          "role": "defending",
+          "vsType": "water",
+          "op": "<=",
+          "value": 0.5
+        },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "multiple-water-resists",
       "title": "At least 2 Water resists",
       "rationale": "Same predicate, threshold 2 — the 'multiple water resistances' constraint.",
-      "assert": { "count": "members", "where": { "kind": "typeEffectiveness", "role": "defending", "vsType": "water", "op": "<=", "value": 0.5 }, "op": ">=", "value": 2 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "typeEffectiveness",
+          "role": "defending",
+          "vsType": "water",
+          "op": "<=",
+          "value": 0.5
+        },
+        "op": ">=",
+        "value": 2
+      }
     },
     {
       "id": "dragon-answer",
       "title": "A Steel or Fairy type for Dragon STABs",
       "rationale": "Demonstrates the `type` atom (member IS one of these types).",
-      "assert": { "count": "members", "where": { "kind": "type", "hasAny": ["steel", "fairy"] }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "type", "hasAny": ["steel", "fairy"] },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "resist-every-type",
@@ -38,7 +84,13 @@
       "assert": {
         "coverage": {
           "group": "all_types",
-          "each": { "kind": "typeEffectiveness", "role": "defending", "vsType": "$each", "op": "<=", "value": 0.5 },
+          "each": {
+            "kind": "typeEffectiveness",
+            "role": "defending",
+            "vsType": "$each",
+            "op": "<=",
+            "value": 0.5
+          },
           "atLeast": 1
         }
       }
@@ -48,7 +100,19 @@
       "title": "Someone can become Ground-immune via Tera Flying",
       "rationale": "Defensive Tera check: with the Tera type active, incoming Ground is 0x. Uses withTera + the immunity expressed as effectiveness 0.",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "typeEffectiveness", "role": "defending", "vsType": "ground", "withTera": true, "op": "==", "value": 0 }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "typeEffectiveness",
+          "role": "defending",
+          "vsType": "ground",
+          "withTera": true,
+          "op": "==",
+          "value": 0
+        },
+        "op": ">=",
+        "value": 1
+      }
     }
   ]
 }

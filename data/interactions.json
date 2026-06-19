@@ -3,80 +3,151 @@
   "version": "2026-05",
   "immunities": {
     "powder": {
-      "anyOf": [ { "type": "grass" }, { "ability": ["overcoat"] }, { "item": ["safetygoggles"] } ]
+      "anyOf": [
+        { "type": "grass" },
+        { "ability": ["overcoat"] },
+        { "item": ["safetygoggles"] }
+      ]
     },
     "prankster": {
-      "anyOf": [ { "type": "dark" } ]
+      "anyOf": [{ "type": "dark" }]
     },
     "intimidate": {
       "anyOf": [
-        { "ability": ["clearbody", "whitesmoke", "fullmetalbody", "hypercutter", "innerfocus", "oblivious", "owntempo", "scrappy", "guarddog"] },
+        {
+          "ability": [
+            "clearbody",
+            "whitesmoke",
+            "fullmetalbody",
+            "hypercutter",
+            "innerfocus",
+            "oblivious",
+            "owntempo",
+            "scrappy",
+            "guarddog"
+          ]
+        },
         { "item": ["clearamulet"] }
       ]
     },
     "ground": {
-      "anyOf": [ { "type": "flying" }, { "ability": ["levitate"] }, { "item": ["airballoon"] } ]
+      "anyOf": [
+        { "type": "flying" },
+        { "ability": ["levitate"] },
+        { "item": ["airballoon"] }
+      ]
     },
     "spore": {
-      "anyOf": [ { "type": "grass" }, { "ability": ["overcoat", "insomnia", "vitalspirit", "sweetveil", "comatose"] }, { "item": ["safetygoggles"] } ]
+      "anyOf": [
+        { "type": "grass" },
+        {
+          "ability": [
+            "overcoat",
+            "insomnia",
+            "vitalspirit",
+            "sweetveil",
+            "comatose"
+          ]
+        },
+        { "item": ["safetygoggles"] }
+      ]
     },
     "sleep": {
-      "anyOf": [ { "ability": ["insomnia", "vitalspirit", "sweetveil", "comatose"] } ]
+      "anyOf": [
+        { "ability": ["insomnia", "vitalspirit", "sweetveil", "comatose"] }
+      ]
     },
     "paralysis": {
-      "anyOf": [ { "type": "electric" }, { "ability": ["limber"] } ]
+      "anyOf": [{ "type": "electric" }, { "ability": ["limber"] }]
     },
     "burn": {
-      "anyOf": [ { "type": "fire" }, { "ability": ["waterveil", "waterbubble", "thermalexchange"] } ]
+      "anyOf": [
+        { "type": "fire" },
+        { "ability": ["waterveil", "waterbubble", "thermalexchange"] }
+      ]
     },
     "weather_chip": {
       "anyOf": [
-        { "ability": ["overcoat", "magicguard", "sandforce", "sandrush", "sandveil", "snowcloak", "icebody", "slushrush"] },
+        {
+          "ability": [
+            "overcoat",
+            "magicguard",
+            "sandforce",
+            "sandrush",
+            "sandveil",
+            "snowcloak",
+            "icebody",
+            "slushrush"
+          ]
+        },
         { "item": ["safetygoggles"] },
-        { "all": [ { "type": ["rock", "ground", "steel"] }, { "weather": "sand" } ] },
-        { "all": [ { "type": "ice" }, { "weather": "snow" } ] }
+        {
+          "all": [
+            { "type": ["rock", "ground", "steel"] },
+            { "weather": "sand" }
+          ]
+        },
+        { "all": [{ "type": "ice" }, { "weather": "snow" }] }
       ]
     },
     "ohko": {
-      "anyOf": [ { "ability": ["sturdy"] }, { "item": ["focussash"] } ]
+      "anyOf": [{ "ability": ["sturdy"] }, { "item": ["focussash"] }]
     },
     "trapping": {
-      "anyOf": [ { "type": "ghost" }, { "ability": ["runaway"] }, { "item": ["shedshell"] } ]
+      "anyOf": [
+        { "type": "ghost" },
+        { "ability": ["runaway"] },
+        { "item": ["shedshell"] }
+      ]
     },
     "taunt": {
-      "anyOf": [ { "ability": ["oblivious", "aromaveil"] }, { "item": ["mentalherb"] } ]
+      "anyOf": [
+        { "ability": ["oblivious", "aromaveil"] },
+        { "item": ["mentalherb"] }
+      ]
     },
     "redirection": {
-      "anyOf": [ { "ability": ["propellertail", "stalwart"] } ]
+      "anyOf": [{ "ability": ["propellertail", "stalwart"] }]
     }
   },
   "moveTagImmunities": {
     "$comment": "For immuneTo {moveTag: X}: per-move immunity, combining type immunity with ability/item. e.g. Fissure (ohko, Ground) is dodged by Flying/Levitate/Air Balloon OR blocked by Sturdy.",
     "ohko": {
-      "anyOf": [ { "ability": ["sturdy"] }, { "item": ["focussash"] }, { "typeImmuneToMove": true } ]
+      "anyOf": [
+        { "ability": ["sturdy"] },
+        { "item": ["focussash"] },
+        { "typeImmuneToMove": true }
+      ]
     },
     "powder-move": {
-      "anyOf": [ { "type": "grass" }, { "ability": ["overcoat"] }, { "item": ["safetygoggles"] } ]
+      "anyOf": [
+        { "type": "grass" },
+        { "ability": ["overcoat"] },
+        { "item": ["safetygoggles"] }
+      ]
     },
     "sound": {
-      "anyOf": [ { "ability": ["soundproof"] } ]
+      "anyOf": [{ "ability": ["soundproof"] }]
     },
     "contact": {
-      "anyOf": [ { "item": ["protectivepads"] }, { "ability": ["longreach"] } ]
+      "anyOf": [{ "item": ["protectivepads"] }, { "ability": ["longreach"] }]
     }
   },
   "hazardRemoval": {
     "toxicspikes": {
-      "anyOf": [ { "all": [ { "type": "poison" }, { "grounded": true } ] }, { "move": ["rapidspin", "mortalspin", "tidyup", "defog"] } ]
+      "anyOf": [
+        { "all": [{ "type": "poison" }, { "grounded": true }] },
+        { "move": ["rapidspin", "mortalspin", "tidyup", "defog"] }
+      ]
     },
     "stealthrock": {
-      "anyOf": [ { "move": ["rapidspin", "mortalspin", "tidyup", "defog"] } ]
+      "anyOf": [{ "move": ["rapidspin", "mortalspin", "tidyup", "defog"] }]
     },
     "spikes": {
-      "anyOf": [ { "move": ["rapidspin", "mortalspin", "tidyup", "defog"] } ]
+      "anyOf": [{ "move": ["rapidspin", "mortalspin", "tidyup", "defog"] }]
     },
     "stickyweb": {
-      "anyOf": [ { "move": ["rapidspin", "mortalspin", "tidyup", "defog"] } ]
+      "anyOf": [{ "move": ["rapidspin", "mortalspin", "tidyup", "defog"] }]
     }
   }
 }

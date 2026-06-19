@@ -10,8 +10,20 @@
         "k": 2,
         "of": [
           { "kind": "tagged", "of": "move", "tag": "pivot" },
-          { "kind": "typeEffectiveness", "role": "defending", "vsType": "water", "op": "<=", "value": 0.5 },
-          { "kind": "stat", "stat": "hp", "vs": "base", "op": ">=", "value": 90 }
+          {
+            "kind": "typeEffectiveness",
+            "role": "defending",
+            "vsType": "water",
+            "op": "<=",
+            "value": 0.5
+          },
+          {
+            "kind": "stat",
+            "stat": "hp",
+            "vs": "base",
+            "op": ">=",
+            "value": 90
+          }
         ]
       }
     }
@@ -22,35 +34,69 @@
       "title": "All six are level 50",
       "rationale": "VGC is level 50; sanity check using the level atom.",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "level", "op": "==", "value": 50 }, "op": "==", "value": 6 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "level", "op": "==", "value": 50 },
+        "op": "==",
+        "value": 6
+      }
     },
     {
       "id": "mostly-plus-natures",
       "title": "At least 4 mons run an offensive nature",
       "rationale": "nature membership check.",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "nature", "in": ["adamant", "jolly", "modest", "timid"] }, "op": ">=", "value": 4 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "nature",
+          "in": ["adamant", "jolly", "modest", "timid"]
+        },
+        "op": ">=",
+        "value": 4
+      }
     },
     {
       "id": "indeedee-f-for-psychic-terrain",
       "title": "A female Indeedee (Psychic Terrain) if used",
       "rationale": "gender atom — Indeedee-F is the Psychic-Surge form.",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "all", "of": [ { "kind": "species", "is": "indeedeef" }, { "kind": "gender", "is": "F" } ] }, "op": ">=", "value": 0 }
+      "assert": {
+        "count": "members",
+        "where": {
+          "kind": "all",
+          "of": [
+            { "kind": "species", "is": "indeedeef" },
+            { "kind": "gender", "is": "F" }
+          ]
+        },
+        "op": ">=",
+        "value": 0
+      }
     },
     {
       "id": "a-bulky-pivot",
       "title": "At least one bulky pivot",
       "rationale": "ref + atLeastK: satisfies >=2 of {pivot move, water resist, base HP >= 90}.",
       "severity": "warn",
-      "assert": { "count": "members", "where": { "kind": "ref", "predicate": "bulky_pivot" }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "ref", "predicate": "bulky_pivot" },
+        "op": ">=",
+        "value": 1
+      }
     },
     {
       "id": "a-tera-water-option",
       "title": "Someone can Tera Water",
       "rationale": "teraType identity check.",
       "severity": "info",
-      "assert": { "count": "members", "where": { "kind": "teraType", "is": "water" }, "op": ">=", "value": 1 }
+      "assert": {
+        "count": "members",
+        "where": { "kind": "teraType", "is": "water" },
+        "op": ">=",
+        "value": 1
+      }
     }
   ]
 }

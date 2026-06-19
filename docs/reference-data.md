@@ -12,7 +12,7 @@ The schema deliberately holds no meta knowledge. Three data files do, and a futu
 ```
 
 - `tags` is the open vocabulary the `tagged` atom matches against.
-- **Facets** (any key other than `tags`) carry sub‑type data — e.g. `speedControlKind: tailwind | trick_room | paralysis | lower_speed`. `countDistinct: "facet:speedControlKind"` counts distinct *mechanisms*; `tagged … facet/equals` filters to one.
+- **Facets** (any key other than `tags`) carry sub‑type data — e.g. `speedControlKind: tailwind | trick_room | paralysis | lower_speed`. `countDistinct: "facet:speedControlKind"` counts distinct _mechanisms_; `tagged … facet/equals` filters to one.
 - Seed from standard competitive categorizations: protect moves, priority moves, redirection, hazard control, setup moves, choice items, speed‑modifying items/abilities, and type/secondary immunities.
 
 ## `data/interactions.json` — immunity & removal sources
@@ -21,16 +21,16 @@ The schema deliberately holds no meta knowledge. Three data files do, and a futu
 
 **Source‑predicate grammar** (a node matches if it holds for the member):
 
-| node | matches when |
-|---|---|
-| `{ "type": name \| [names] }` | member is (one of) that type |
-| `{ "ability": [ids] }` | member's ability ∈ list |
-| `{ "item": [ids] }` | member's item ∈ list |
-| `{ "move": [ids] }` | member knows one of these moves |
-| `{ "grounded": true }` | member is grounded |
-| `{ "weather": name }` | requires that weather active (conditional immunity) |
-| `{ "all": [ … ] }` | AND |
-| `{ "anyOf": [ … ] }` | OR (also the top‑level form) |
+| node                           | matches when                                                                                                         |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `{ "type": name \| [names] }`  | member is (one of) that type                                                                                         |
+| `{ "ability": [ids] }`         | member's ability ∈ list                                                                                              |
+| `{ "item": [ids] }`            | member's item ∈ list                                                                                                 |
+| `{ "move": [ids] }`            | member knows one of these moves                                                                                      |
+| `{ "grounded": true }`         | member is grounded                                                                                                   |
+| `{ "weather": name }`          | requires that weather active (conditional immunity)                                                                  |
+| `{ "all": [ … ] }`             | AND                                                                                                                  |
+| `{ "anyOf": [ … ] }`           | OR (also the top‑level form)                                                                                         |
 | `{ "typeImmuneToMove": true }` | member's typing is immune to the incoming move's type (per‑move `moveTag` immunities, e.g. Flying vs Ground Fissure) |
 
 Three buckets: `immunities` (named effects), `moveTagImmunities` (per‑move classes like `ohko`), `hazardRemoval` (per‑hazard).
@@ -59,14 +59,14 @@ Run `npm test` after any edit. Add an id‑typo and watch it fail.
 
 Each atom `kind` becomes one registered function over a resolved member. Build on standard primitives rather than reinventing them:
 
-| concern | approach |
-|---|---|
-| Team / member model | a per‑Pokemon set — species, item, ability, moves, nature, EVs, and (required by calc atoms) `teraType`, `level`, `ivs` |
-| Canonical ids | normalize to Showdown ids (lowercase, strip non‑alphanumerics); the schema validates ids as `^[a-z0-9]+$` |
-| `typeEffectiveness` | a type‑effectiveness table (attacker type → defender type → multiplier) |
-| `stat` / `outspeeds` | a level‑50 stat calculator (from base/EVs/IVs/nature), then apply the `mods` multipliers (scarf, tailwind, paralysis, weather speed abilities) |
-| `survives` / `koes` / `dealsDamage` | **`@smogon/calc`** (the chosen backend) for damage rolls; KO/2HKO with Focus Sash / Eviolite handling |
-| Threat `set:"usage"` | a usage‑stats source: the most‑used spread for the species (any nature) plus the item marginal for a default item |
-| Report | emit `team-test-report.schema.json` — `satisfiedBy` / `coverage.uncovered` feed the optimizer |
+| concern                             | approach                                                                                                                                       |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Team / member model                 | a per‑Pokemon set — species, item, ability, moves, nature, EVs, and (required by calc atoms) `teraType`, `level`, `ivs`                        |
+| Canonical ids                       | normalize to Showdown ids (lowercase, strip non‑alphanumerics); the schema validates ids as `^[a-z0-9]+$`                                      |
+| `typeEffectiveness`                 | a type‑effectiveness table (attacker type → defender type → multiplier)                                                                        |
+| `stat` / `outspeeds`                | a level‑50 stat calculator (from base/EVs/IVs/nature), then apply the `mods` multipliers (scarf, tailwind, paralysis, weather speed abilities) |
+| `survives` / `koes` / `dealsDamage` | **`@smogon/calc`** (the chosen backend) for damage rolls; KO/2HKO with Focus Sash / Eviolite handling                                          |
+| Threat `set:"usage"`                | a usage‑stats source: the most‑used spread for the species (any nature) plus the item marginal for a default item                              |
+| Report                              | emit `team-test-report.schema.json` — `satisfiedBy` / `coverage.uncovered` feed the optimizer                                                  |
 
 **Champions Reg M‑A caveat:** `@smogon/calc` assumes mainline 252‑EV stat math; the Champions format uses stat points with an EV cap of 32. An evaluator targeting that format needs a shim that converts Champions stat points → effective stats before invoking the calc. The schema carries EVs + `format` and is unaffected.
