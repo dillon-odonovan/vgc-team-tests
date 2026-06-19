@@ -299,5 +299,8 @@ export function evalAssertion(
   if ("count" in assert) return evalCount(assert, team, ctx);
   if ("countDistinct" in assert) return evalCountDistinct(assert, team, ctx);
   if ("coverage" in assert) return evalCoverage(assert, team, ctx);
-  return evalTeam(assert, team, ctx);
+  if ("team" in assert) return evalTeam(assert, team, ctx);
+  throw new Error(
+    `Unknown assertion shape: ${JSON.stringify(Object.keys(assert))}`,
+  );
 }

@@ -197,6 +197,13 @@ export function evalPredicate(
         const moveTypes = MOVE_TAG_TYPES[pred.moveTag] ?? [];
         return evalSource(src, member, { typeEffectiveness, moveTypes });
       }
+      if (pred.move != null) {
+        const src = interactions.moveTagImmunities?.[pred.move];
+        if (!src) return false;
+        const moveData = gen9.moves.get(pred.move);
+        const moveTypes = moveData?.exists ? [moveData.type.toLowerCase()] : [];
+        return evalSource(src, member, { typeEffectiveness, moveTypes });
+      }
       return false;
     }
     case "canRemove": {
@@ -286,17 +293,20 @@ export function evalPredicate(
       const roll = pred.roll ?? "min";
       const hits = pred.hits ?? 1;
 
+      // 'specified' isolates exactly one combo: the named variation, or the
+      // base (no-overlay) case if no variation is named. 'worst'/'best' (and
+      // the default) consider every combo.
+      const relevantCombos =
+        pred.case === "specified"
+          ? combos.filter((v) =>
+              pred.variation ? v?.name === pred.variation : v === null,
+            )
+          : combos;
+
       let worstSurvives: boolean | null = null;
       let bestSurvives: boolean | null = null;
 
-      for (const variation of combos) {
-        if (
-          pred.variation &&
-          variation?.name &&
-          variation.name !== pred.variation
-        )
-          continue;
-
+      for (const variation of relevantCombos) {
         const attacker = tryOrNull(() => buildCalcPokemon(threat, variation));
         if (!attacker) continue;
 
@@ -322,9 +332,10 @@ export function evalPredicate(
         if (bestSurvives === null || survives) bestSurvives = survives;
       }
 
-      if (pred.case === "worst") return worstSurvives ?? false;
       if (pred.case === "best") return bestSurvives ?? false;
-      // 'specified' or default: conservative (must survive every case checked)
+      // 'worst' and the default: conservative (must survive every case
+      // checked). 'specified' also lands here, but relevantCombos already
+      // narrowed the loop to the single requested combo.
       return worstSurvives ?? false;
     }
 
