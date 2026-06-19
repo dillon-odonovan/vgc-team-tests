@@ -11,21 +11,30 @@
  *   { grounded: true }        member is grounded
  *   { typeImmuneToMove: true } member's typing is immune to opts.moveType
  *   { weather: name }         battle weather (not checkable without state → false)
- *
- * opts:
- *   typeEffectiveness(type, memberTypes) → number
- *   moveType: string  (type to use for typeImmuneToMove checks)
  */
+import type { SourceNode, TeamMember } from "./types.js";
 
-export function evalSource(node, member, opts = {}) {
+export interface EvalSourceOpts {
+  typeEffectiveness?: (type: string, defenderTypes: string[]) => number;
+  /** The type to use for typeImmuneToMove checks (e.g. 'ground' for Fissure / ohko). */
+  moveType?: string | null;
+}
+
+export function evalSource(
+  node: SourceNode | undefined,
+  member: TeamMember,
+  opts: EvalSourceOpts = {},
+): boolean {
   if (!node || typeof node !== "object") return false;
 
   if (node.anyOf) return node.anyOf.some((n) => evalSource(n, member, opts));
   if (node.all) return node.all.every((n) => evalSource(n, member, opts));
 
-  if ("type" in node) {
+  if (node.type != null) {
     const mTypes = (member._types ?? []).map((t) => t.toLowerCase());
-    const required = [].concat(node.type).map((t) => t.toLowerCase());
+    const required = ([] as string[])
+      .concat(node.type)
+      .map((t) => t.toLowerCase());
     return required.some((t) => mTypes.includes(t));
   }
 
@@ -42,7 +51,7 @@ export function evalSource(node, member, opts = {}) {
     return node.move.some((m) => moves.includes(m));
   }
 
-  if ("grounded" in node) {
+  if (node.grounded != null) {
     const types = (member._types ?? []).map((t) => t.toLowerCase());
     const flying = types.includes("flying");
     const levitate = member.ability === "levitate";
@@ -52,7 +61,6 @@ export function evalSource(node, member, opts = {}) {
   }
 
   if (node.typeImmuneToMove) {
-    // Requires opts.moveType and opts.typeEffectiveness
     if (!opts.moveType || !opts.typeEffectiveness) return false;
     const mult = opts.typeEffectiveness(opts.moveType, member._types ?? []);
     return mult === 0;

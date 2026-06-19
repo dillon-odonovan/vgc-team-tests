@@ -1,27 +1,40 @@
 /**
  * Evaluates a predicate against a single team member.
- *
- * ctx shape:
- *   suite          – the full suite object (for definitions.*)
- *   tags           – data/tags.json parsed
- *   interactions   – data/interactions.json parsed
- *   gen            – @pkmn/dex gen9 instance
- *   calcTools      – { Generations, Pokemon, Move, Field, calculate } from @smogon/calc
- *   calcGen        – @smogon/calc gen9 (Generations.get(9, Dex))
- *   each           – current $each binding (string; null outside coverage)
- *
- * Returns boolean. Throws on unknown kind.
  */
+import { Pokemon, Move, Field, Side, calculate } from "@smogon/calc";
+import type { Result, State } from "@smogon/calc";
 
-import { evalSource } from "./eval-source.mjs";
-import { typeEffectiveness } from "./type-chart.mjs";
-import { calcStat, applyMods, natureModifier } from "./stat-calc.mjs";
+import { calcGen9, gen9 } from "./dex.js";
+import { evalSource } from "./eval-source.js";
+import { typeEffectiveness, properCase } from "./type-chart.js";
+import { calcStat, applyMods } from "./stat-calc.js";
+import type {
+  Predicate,
+  TaggedPredicate,
+  EvalContext,
+  TeamMember,
+  ThreatSpec,
+  GroupSpec,
+  Variation,
+  FieldSpec,
+  SideSpec,
+  TagEntry,
+  TagsData,
+  Op,
+} from "./types.js";
 
 // -----------------------------------------------------------------------------
-// Helpers
+// Calc-library branded/literal type aliases (derived from State, since the
+// package doesn't re-export I.AbilityName etc. directly).
 // -----------------------------------------------------------------------------
+type CalcAbilityName = NonNullable<State.Pokemon["ability"]>;
+type CalcItemName = NonNullable<State.Pokemon["item"]>;
+type CalcNatureName = NonNullable<State.Pokemon["nature"]>;
+type CalcTypeName = NonNullable<State.Pokemon["teraType"]>;
+type CalcWeather = NonNullable<State.Field["weather"]>;
+type CalcTerrain = NonNullable<State.Field["terrain"]>;
 
-function compare(lhs, op, rhs) {
+function compare(lhs: number, op: Op, rhs: number): boolean {
   switch (op) {
     case ">=":
       return lhs >= rhs;
@@ -42,47 +55,56 @@ function compare(lhs, op, rhs) {
 
 // Canonical type used when checking OHKO-move immunities for typeImmuneToMove.
 // Fissure (Ground) is the canonical VGC OHKO move.
-const MOVE_TAG_TYPES = {
+const MOVE_TAG_TYPES: Record<string, string> = {
   ohko: "ground",
 };
 
-// Resolve a threat name or inline threat spec to a threat object.
-function resolveThreat(ref, ctx) {
+// -----------------------------------------------------------------------------
+// Threat / calc-Pokemon helpers
+// -----------------------------------------------------------------------------
+
+function resolveThreat(ref: string | ThreatSpec, ctx: EvalContext): ThreatSpec {
   if (typeof ref === "object") return ref; // inline
   if (ref === "$each") {
-    // $each is either a threat-name string or a species ID used as a target
     const bound = ctx.each;
-    if (!bound) throw new Error("$each used outside a coverage assertion");
-    // Try as a named threat first
+    if (bound == null)
+      throw new Error("$each used outside a coverage assertion");
     return resolveThreat(bound, ctx);
   }
-  // Check suite definitions
   const suiteThreat = ctx.suite.definitions?.threats?.[ref];
   if (suiteThreat) return suiteThreat;
-  // Check shared library
-  const libThreat = ctx.threatsLib?.threats?.[ref];
+  const libThreat = ctx.threatsLib.threats?.[ref];
   if (libThreat) return libThreat;
-  // Fall back: treat the ref as a bare species ID
+  // Fall back: treat the ref as a bare species ID with a default ("usage") spread.
   return { species: ref, set: "usage" };
 }
 
-// Build @smogon/calc Pokemon args from a threat spec.
-function buildCalcPokemon(threatSpec, ctx, resolvedVariation = null) {
-  const { calcGen, calcTools } = ctx;
-  const { Pokemon } = calcTools;
+function resolveVariations(threat: ThreatSpec, ctx: EvalContext): Variation[] {
+  const variations = threat.variations ?? [];
+  return variations.map((v) => {
+    if (typeof v === "string") {
+      return ctx.threatsLib.variations?.[v] ?? { name: v };
+    }
+    return v;
+  });
+}
 
-  const base = { ...threatSpec };
+function buildCalcPokemon(
+  threatSpec: ThreatSpec,
+  resolvedVariation?: Variation | null,
+): Pokemon {
+  const base: ThreatSpec = { ...threatSpec };
 
-  // Merge variation
   if (resolvedVariation) {
     if (resolvedVariation.item) base.item = resolvedVariation.item;
     if (resolvedVariation.ability) base.ability = resolvedVariation.ability;
     if (resolvedVariation.boosts)
       base.boosts = { ...(base.boosts ?? {}), ...resolvedVariation.boosts };
-    if (resolvedVariation.field) base.field = resolvedVariation.field; // handled at Field level
+    if (resolvedVariation.field)
+      base.field = { ...(base.field ?? {}), ...resolvedVariation.field };
   }
 
-  // For set:'usage' we don't have actual usage data, so use 0 EVs as default.
+  // For set:'usage' we don't have actual usage data, so 0 EVs is the default.
   const evs = base.evs ?? { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
   const ivs = base.ivs ?? {
     hp: 31,
@@ -92,77 +114,135 @@ function buildCalcPokemon(threatSpec, ctx, resolvedVariation = null) {
     spd: 31,
     spe: 31,
   };
+  const isTera = base.tera ?? false;
 
-  return new Pokemon(calcGen, base.species, {
+  return new Pokemon(calcGen9, base.species, {
     level: base.level ?? 50,
-    ability: base.ability,
-    item: base.item,
-    nature: base.nature ?? "Hardy",
+    ability: base.ability as CalcAbilityName | undefined,
+    item: base.item as CalcItemName | undefined,
+    nature: properCase(base.nature ?? "hardy") as CalcNatureName,
     evs,
     ivs,
-    teraType: base.teraType,
-    tera: base.tera ?? false,
+    teraType:
+      isTera && base.teraType
+        ? (properCase(base.teraType) as CalcTypeName)
+        : undefined,
     boosts: base.boosts,
-    curHP: undefined,
   });
 }
 
-// Build @smogon/calc Pokemon from a team member.
-function buildMemberPokemon(member, ctx, opts = {}) {
-  const { calcGen, calcTools } = ctx;
-  const { Pokemon } = calcTools;
-  return new Pokemon(calcGen, member.species, {
-    level: member.level ?? 50,
-    ability: member.ability,
-    item: member.item,
-    nature: member.nature ?? "Hardy",
+function buildMemberPokemon(
+  member: TeamMember,
+  opts: { withTera?: boolean } = {},
+): Pokemon {
+  return new Pokemon(calcGen9, member.species, {
+    level: member.level,
+    ability: (member.ability ?? undefined) as CalcAbilityName | undefined,
+    item: (member.item ?? undefined) as CalcItemName | undefined,
+    nature: properCase(member.nature ?? "hardy") as CalcNatureName,
     evs: member.evs,
     ivs: member.ivs,
-    teraType: opts.withTera ? member.teraType : undefined,
-    tera: opts.withTera ? true : false,
+    teraType:
+      opts.withTera && member.teraType
+        ? (properCase(member.teraType) as CalcTypeName)
+        : undefined,
   });
 }
 
-// Find threat variations, resolving named ones from the shared library.
-function resolveVariations(threat, ctx) {
-  const variations = threat.variations ?? [];
-  return variations.map((v) => {
-    if (typeof v === "string") {
-      return ctx.threatsLib?.variations?.[v] ?? { name: v };
-    }
-    return v;
-  });
+function toCalcWeather(w: FieldSpec["weather"]): CalcWeather | undefined {
+  if (!w || w === "none") return undefined;
+  return properCase(w) as CalcWeather;
 }
 
-// Run a @smogon/calc damage result and get damage rolls array.
-function getDamageRolls(result) {
-  const d = result.damage;
-  return Array.isArray(d) ? d : [d];
+function toCalcTerrain(t: FieldSpec["terrain"]): CalcTerrain | undefined {
+  if (!t || t === "none") return undefined;
+  return properCase(t) as CalcTerrain;
 }
 
-// Tags lookup: returns the entity's entry in tags.json for a given category.
-function getTagEntry(member, of, tags) {
+function toCalcSide(
+  side: SideSpec | undefined,
+): Partial<State.Side> | undefined {
+  if (!side) return undefined;
+  const out: Partial<State.Side> = {};
+  if (side.tailwind != null) out.isTailwind = side.tailwind;
+  if (side.reflect != null) out.isReflect = side.reflect;
+  if (side.lightScreen != null) out.isLightScreen = side.lightScreen;
+  if (side.auroraVeil != null) out.isAuroraVeil = side.auroraVeil;
+  if (side.helpingHand != null) out.isHelpingHand = side.helpingHand;
+  if (side.friendGuard != null) out.isFriendGuard = side.friendGuard;
+  if (side.isProtected != null) out.isProtected = side.isProtected;
+  return out;
+}
+
+function buildCalcField(merged: FieldSpec): Field {
+  const opts: Partial<State.Field> = { gameType: "Doubles" };
+  const weather = toCalcWeather(merged.weather);
+  if (weather) opts.weather = weather;
+  const terrain = toCalcTerrain(merged.terrain);
+  if (terrain) opts.terrain = terrain;
+  const attackerSide = toCalcSide(merged.attackerSide);
+  if (attackerSide) opts.attackerSide = new Side(attackerSide);
+  const defenderSide = toCalcSide(merged.defenderSide);
+  if (defenderSide) opts.defenderSide = new Side(defenderSide);
+  // Note: Trick Room only affects turn order, not damage math, so there's no
+  // corresponding Field property — `underTrickRoom` is handled in `outspeeds`.
+  return new Field(opts);
+}
+
+function getDamageRolls(damage: Result["damage"]): number[] {
+  if (typeof damage === "number") return [damage];
+  if (Array.isArray(damage)) {
+    if (damage.length > 0 && Array.isArray(damage[0]))
+      return (damage as number[][]).flat();
+    return damage as number[];
+  }
+  return [];
+}
+
+function getTagEntry(
+  member: TeamMember,
+  of: TaggedPredicate["of"],
+  tags: TagsData,
+): TagEntry[] {
   switch (of) {
     case "move":
-      return member.moves.map((id) => tags.moves?.[id]).filter(Boolean);
+      return member.moves
+        .map((id) => tags.moves?.[id])
+        .filter((e): e is TagEntry => Boolean(e));
     case "item":
-      return member.item ? [tags.items?.[member.item]].filter(Boolean) : [];
+      return member.item
+        ? [tags.items?.[member.item]].filter((e): e is TagEntry => Boolean(e))
+        : [];
     case "ability":
       return member.ability
-        ? [tags.abilities?.[member.ability]].filter(Boolean)
+        ? [tags.abilities?.[member.ability]].filter((e): e is TagEntry =>
+            Boolean(e),
+          )
         : [];
-    case "species":
-      return [tags.species?.[member.species]].filter(Boolean);
-    default:
-      return [];
+    case "species": {
+      const e = tags.species?.[member.species];
+      return e ? [e] : [];
+    }
   }
+}
+
+export function resolveGroup(name: string, ctx: EvalContext): GroupSpec | null {
+  return (
+    ctx.suite.definitions?.groups?.[name] ??
+    ctx.threatsLib.groups?.[name] ??
+    null
+  );
 }
 
 // -----------------------------------------------------------------------------
 // Evaluator
 // -----------------------------------------------------------------------------
 
-export function evalPredicate(pred, member, ctx) {
+export function evalPredicate(
+  pred: Predicate,
+  member: TeamMember,
+  ctx: EvalContext,
+): boolean {
   switch (pred.kind) {
     // Composites
     case "all":
@@ -192,13 +272,13 @@ export function evalPredicate(pred, member, ctx) {
     case "ability": {
       const ab = member.ability;
       if (pred.is != null) return ab === pred.is;
-      if (pred.in != null) return pred.in.includes(ab);
+      if (pred.in != null) return ab != null && pred.in.includes(ab);
       return false;
     }
     case "nature": {
       const nat = member.nature;
       if (pred.is != null) return nat === pred.is;
-      if (pred.in != null) return pred.in.includes(nat);
+      if (pred.in != null) return nat != null && pred.in.includes(nat);
       return false;
     }
     case "gender":
@@ -211,7 +291,8 @@ export function evalPredicate(pred, member, ctx) {
         return pred.present ? has : !has;
       }
       if (pred.is != null) return member.item === pred.is;
-      if (pred.in != null) return pred.in.includes(member.item);
+      if (pred.in != null)
+        return member.item != null && pred.in.includes(member.item);
       return false;
     }
     case "move": {
@@ -238,7 +319,7 @@ export function evalPredicate(pred, member, ctx) {
     case "teraType": {
       const tt = member.teraType;
       if (pred.is != null) return tt === pred.is;
-      if (pred.in != null) return pred.in.includes(tt);
+      if (pred.in != null) return tt != null && pred.in.includes(tt);
       return false;
     }
     case "inGroup": {
@@ -247,7 +328,7 @@ export function evalPredicate(pred, member, ctx) {
       if (group.kind === "species") {
         return (group.members ?? []).includes(member.species);
       }
-      return false; // non-species groups are for coverage assertions, not inGroup atom
+      return false; // non-species groups are for coverage assertions, not inGroup
     }
 
     // Taxonomy atoms
@@ -258,8 +339,8 @@ export function evalPredicate(pred, member, ctx) {
         if (pred.facet != null) {
           if (pred.equals != null) {
             if (entry[pred.facet] === pred.equals) return true;
-          } else {
-            if (entry[pred.facet] != null) return true;
+          } else if (entry[pred.facet] != null) {
+            return true;
           }
         } else {
           return true;
@@ -290,15 +371,14 @@ export function evalPredicate(pred, member, ctx) {
 
     // Computed atoms
     case "stat": {
-      const speciesData = ctx.gen.species.get(member.species);
+      const speciesData = gen9.species.get(member.species);
       if (!speciesData?.exists) return false;
       const statKey = pred.stat;
-      let value;
+      let value: number;
       if (pred.vs === "base") {
         value = speciesData.baseStats[statKey];
         value = applyMods(value, statKey, pred.mods);
       } else {
-        // final (default)
         const base = speciesData.baseStats[statKey];
         const ev = member.evs?.[statKey] ?? 0;
         const iv = member.ivs?.[statKey] ?? 31;
@@ -311,12 +391,13 @@ export function evalPredicate(pred, member, ctx) {
 
     case "outspeeds": {
       const threatRef = pred.threat === "$each" ? ctx.each : pred.threat;
+      if (threatRef == null)
+        throw new Error("$each used outside a coverage assertion");
       const threat = resolveThreat(threatRef, ctx);
-      const threatSpecies = ctx.gen.species.get(threat.species);
+      const threatSpecies = gen9.species.get(threat.species);
       if (!threatSpecies?.exists) return false;
 
-      // Member effective speed
-      const mBase = ctx.gen.species.get(member.species)?.baseStats?.spe ?? 0;
+      const mBase = gen9.species.get(member.species)?.baseStats?.spe ?? 0;
       let mSpeed = calcStat(
         "spe",
         mBase,
@@ -327,10 +408,8 @@ export function evalPredicate(pred, member, ctx) {
       );
       mSpeed = applyMods(mSpeed, "spe", pred.mods);
 
-      // Threat effective speed
       const tBase = threatSpecies.baseStats.spe;
-      const tMods = [];
-      if (threat.item === "choicescarf") tMods.push("scarf");
+      const tMods: "scarf"[] = threat.item === "choicescarf" ? ["scarf"] : [];
       let tSpeed = calcStat(
         "spe",
         tBase,
@@ -342,14 +421,21 @@ export function evalPredicate(pred, member, ctx) {
       tSpeed = applyMods(tSpeed, "spe", tMods);
 
       if (pred.underTrickRoom) {
-        // Under TR, slower Pokémon move first; we're checking if member is "slower" (wins under TR)
         return pred.orSpeedTie ? mSpeed <= tSpeed : mSpeed < tSpeed;
       }
       return pred.orSpeedTie ? mSpeed >= tSpeed : mSpeed > tSpeed;
     }
 
     case "typeEffectiveness": {
-      const vsType = pred.vsType === "$each" ? ctx.each : pred.vsType;
+      const vsType =
+        pred.vsType === "$each"
+          ? typeof ctx.each === "string"
+            ? ctx.each
+            : null
+          : pred.vsType;
+      if (vsType == null)
+        throw new Error("$each used outside a coverage assertion");
+
       if (pred.role === "defending") {
         const defTypes =
           pred.withTera && member.teraType
@@ -358,43 +444,36 @@ export function evalPredicate(pred, member, ctx) {
         const mult = typeEffectiveness(vsType, defTypes);
         return compare(mult, pred.op, pred.value);
       }
-      if (pred.role === "attacking") {
-        // Member's type effectiveness against the vsType target
-        // vsType here is the defender's type
-        const atkTypes =
-          pred.withTera && member.teraType
-            ? [member.teraType]
-            : (member._types ?? []);
-        const maxMult = Math.max(
-          ...atkTypes.map((at) => typeEffectiveness(at, [vsType])),
-        );
-        return compare(maxMult, pred.op, pred.value);
-      }
-      return false;
+      // attacking: member's offensive type(s) vs the vsType target
+      const atkTypes =
+        pred.withTera && member.teraType
+          ? [member.teraType]
+          : (member._types ?? []);
+      const maxMult = Math.max(
+        ...atkTypes.map((at) => typeEffectiveness(at, [vsType])),
+      );
+      return compare(maxMult, pred.op, pred.value);
     }
 
     case "survives": {
-      if (!ctx.calcTools) return false;
-      const { calculate, Move: CalcMove, Field } = ctx.calcTools;
-
       const threatRef = pred.threat === "$each" ? ctx.each : pred.threat;
+      if (threatRef == null)
+        throw new Error("$each used outside a coverage assertion");
       const threat = resolveThreat(threatRef, ctx);
-      if (!threat?.move) return false; // no move specified on threat — can't run calc
+      if (!threat.move) return false; // no move specified on threat — can't run calc
 
       const variations = resolveVariations(threat, ctx);
-      // Always include the base case (null = no variation overlay), then each variation.
-      const combos = [null, ...variations];
+      // Always include the base case (no variation overlay), then each variation.
+      const combos: (Variation | null)[] = [null, ...variations];
 
-      const defender = buildMemberPokemon(member, ctx, {
-        withTera: pred.withTera,
-      });
+      const defender = buildMemberPokemon(member, { withTera: pred.withTera });
       const defHP = defender.stats.hp;
 
       const roll = pred.roll ?? "min";
       const hits = pred.hits ?? 1;
 
-      let worstSurvives = null;
-      let bestSurvives = null;
+      let worstSurvives: boolean | null = null;
+      let bestSurvives: boolean | null = null;
 
       for (const variation of combos) {
         if (
@@ -404,57 +483,41 @@ export function evalPredicate(pred, member, ctx) {
         )
           continue;
 
-        let attacker;
+        let attacker: Pokemon;
         try {
-          attacker = buildCalcPokemon(threat, ctx, variation);
+          attacker = buildCalcPokemon(threat, variation);
         } catch {
           continue;
         }
 
-        let fieldOpts = { gameType: "Doubles" };
-        const varField = variation?.field ?? {};
-        const threatField = threat.field ?? {};
-        const merged = { ...threatField, ...varField };
-        if (merged.weather) fieldOpts.weather = merged.weather;
-        if (merged.terrain) fieldOpts.terrain = merged.terrain;
-        if (merged.trickRoom) fieldOpts.isGravity = false; // trickRoom via field
-        if (merged.attackerSide)
-          fieldOpts.attackerSide = new ctx.calcTools.Side(merged.attackerSide);
-        if (merged.defenderSide)
-          fieldOpts.defenderSide = new ctx.calcTools.Side(merged.defenderSide);
+        const merged: FieldSpec = {
+          ...(threat.field ?? {}),
+          ...(variation?.field ?? {}),
+        };
+        const field = buildCalcField(merged);
 
-        let move;
+        let move: Move;
         try {
-          move = new CalcMove(ctx.calcGen, threat.move, {
-            isCrit: threat.isCrit,
-          });
+          move = new Move(calcGen9, threat.move, { isCrit: threat.isCrit });
         } catch {
           continue;
         }
 
-        let result;
+        let result: Result;
         try {
-          result = calculate(
-            ctx.calcGen,
-            attacker,
-            defender,
-            move,
-            new Field(fieldOpts),
-          );
+          result = calculate(calcGen9, attacker, defender, move, field);
         } catch {
           continue;
         }
 
-        const rolls = getDamageRolls(result);
+        const rolls = getDamageRolls(result.damage);
         if (!rolls.length) continue;
 
-        // Choose which roll to use
-        let dmg;
+        let dmg: number;
         if (roll === "min") dmg = rolls[0];
         else if (roll === "max") dmg = rolls[rolls.length - 1];
         else dmg = Math.round(rolls.reduce((a, b) => a + b, 0) / rolls.length);
 
-        // Total damage over 'hits' hits
         const totalDmg = dmg * hits;
         const survives = totalDmg < defHP;
 
@@ -464,20 +527,19 @@ export function evalPredicate(pred, member, ctx) {
 
       if (pred.case === "worst") return worstSurvives ?? false;
       if (pred.case === "best") return bestSurvives ?? false;
-      // 'specified' or default: check all, require all to survive
+      // 'specified' or default: conservative (must survive every case checked)
       return worstSurvives ?? false;
     }
 
     case "koes": {
-      if (!ctx.calcTools) return false;
-      const { calculate, Move: CalcMove, Field } = ctx.calcTools;
-
       const threatRef = pred.threat === "$each" ? ctx.each : pred.threat;
+      if (threatRef == null)
+        throw new Error("$each used outside a coverage assertion");
       const threat = resolveThreat(threatRef, ctx);
 
-      let defender;
+      let defender: Pokemon;
       try {
-        defender = buildCalcPokemon(threat, ctx);
+        defender = buildCalcPokemon(threat);
       } catch {
         return false;
       }
@@ -486,41 +548,29 @@ export function evalPredicate(pred, member, ctx) {
       const hits = pred.hits ?? 1;
       const roll = pred.roll ?? "max";
 
-      const attacker = buildMemberPokemon(member, ctx, {
-        withTera: pred.withTera,
-      });
-
-      // Try each of the member's moves (or the specified move)
+      const attacker = buildMemberPokemon(member, { withTera: pred.withTera });
       const movesToTry = pred.move ? [pred.move] : member.moves;
+      const field = buildCalcField({});
 
       for (const moveId of movesToTry) {
-        let move;
+        let move: Move;
         try {
-          move = new CalcMove(ctx.calcGen, moveId);
+          move = new Move(calcGen9, moveId);
         } catch {
           continue;
         }
 
-        let result;
+        let result: Result;
         try {
-          result = calculate(
-            ctx.calcGen,
-            attacker,
-            defender,
-            move,
-            new Field({ gameType: "Doubles" }),
-          );
+          result = calculate(calcGen9, attacker, defender, move, field);
         } catch {
           continue;
         }
 
-        const rolls = getDamageRolls(result);
+        const rolls = getDamageRolls(result.damage);
         if (!rolls.length) continue;
 
-        let dmg;
-        if (roll === "min") dmg = rolls[0];
-        else dmg = rolls[rolls.length - 1];
-
+        const dmg = roll === "min" ? rolls[0] : rolls[rolls.length - 1];
         const totalDmg = dmg * hits;
         if (totalDmg >= defHP) return true;
       }
@@ -528,50 +578,43 @@ export function evalPredicate(pred, member, ctx) {
     }
 
     case "dealsDamage": {
-      if (!ctx.calcTools) return false;
-      const { calculate, Move: CalcMove, Field } = ctx.calcTools;
-
       const threatRef = pred.threat === "$each" ? ctx.each : pred.threat;
+      if (threatRef == null)
+        throw new Error("$each used outside a coverage assertion");
       const threat = resolveThreat(threatRef, ctx);
 
-      let defender;
+      let defender: Pokemon;
       try {
-        defender = buildCalcPokemon(threat, ctx);
+        defender = buildCalcPokemon(threat);
       } catch {
         return false;
       }
 
       const defHP = defender.stats.hp;
       const roll = pred.roll ?? "avg";
-      const attacker = buildMemberPokemon(member, ctx);
-
+      const attacker = buildMemberPokemon(member);
       const movesToTry = pred.move ? [pred.move] : member.moves;
+      const field = buildCalcField({});
 
       for (const moveId of movesToTry) {
-        let move;
+        let move: Move;
         try {
-          move = new CalcMove(ctx.calcGen, moveId);
+          move = new Move(calcGen9, moveId);
         } catch {
           continue;
         }
 
-        let result;
+        let result: Result;
         try {
-          result = calculate(
-            ctx.calcGen,
-            attacker,
-            defender,
-            move,
-            new Field({ gameType: "Doubles" }),
-          );
+          result = calculate(calcGen9, attacker, defender, move, field);
         } catch {
           continue;
         }
 
-        const rolls = getDamageRolls(result);
+        const rolls = getDamageRolls(result.damage);
         if (!rolls.length) continue;
 
-        let dmg;
+        let dmg: number;
         if (roll === "min") dmg = rolls[0];
         else if (roll === "max") dmg = rolls[rolls.length - 1];
         else dmg = Math.round(rolls.reduce((a, b) => a + b, 0) / rolls.length);
@@ -586,17 +629,5 @@ export function evalPredicate(pred, member, ctx) {
     case "foulPlay":
       // Reserved atom — always false until a battle-AI backend is wired up.
       return false;
-
-    default:
-      throw new Error(`Unknown predicate kind: "${pred.kind}"`);
   }
-}
-
-// Resolve a group by name (checks suite definitions then shared library).
-export function resolveGroup(name, ctx) {
-  return (
-    ctx.suite.definitions?.groups?.[name] ??
-    ctx.threatsLib?.groups?.[name] ??
-    null
-  );
 }

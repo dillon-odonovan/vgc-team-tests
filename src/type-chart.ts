@@ -2,7 +2,7 @@
  * Gen 9 type effectiveness chart.
  * CHART[attackType][defenderType] = multiplier; missing = 1×.
  */
-export const CHART = {
+export const CHART: Record<string, Record<string, number>> = {
   Normal: { Rock: 0.5, Steel: 0.5, Ghost: 0 },
   Fire: {
     Fire: 0.5,
@@ -129,16 +129,20 @@ export const CHART = {
   },
 };
 
-function cap(s) {
+/** Capitalizes a single-word id, e.g. 'ground' -> 'Ground', 'adamant' -> 'Adamant'. */
+export function properCase(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 }
 
 /** Returns the type effectiveness multiplier for attackType hitting defenderTypes[]. */
-export function typeEffectiveness(attackType, defenderTypes) {
-  const atk = cap(attackType);
+export function typeEffectiveness(
+  attackType: string,
+  defenderTypes: string[],
+): number {
+  const atk = properCase(attackType);
   let mult = 1;
   for (const dt of defenderTypes) {
-    mult *= CHART[atk]?.[cap(dt)] ?? 1;
+    mult *= CHART[atk]?.[properCase(dt)] ?? 1;
   }
   return mult;
 }

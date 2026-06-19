@@ -1,9 +1,10 @@
 /**
  * Level-50 stat formula and nature/modifier lookup.
  */
+import type { StatKey, StatModifier } from "./types.js";
 
-// [+stat, -stat] for each nature; neutral natures have empty entry.
-const NATURES = {
+// [+stat, -stat] for each nature; neutral natures have an empty entry.
+const NATURES: Record<string, [StatKey, StatKey] | []> = {
   hardy: [],
   docile: [],
   serious: [],
@@ -31,25 +32,25 @@ const NATURES = {
   careful: ["spd", "spa"],
 };
 
-export function natureModifier(nature, stat) {
-  const mods = NATURES[nature?.toLowerCase()] ?? [];
+export function natureModifier(
+  nature: string | undefined,
+  stat: StatKey,
+): number {
+  const mods = NATURES[nature?.toLowerCase() ?? ""] ?? [];
   if (mods[0] === stat) return 1.1;
   if (mods[1] === stat) return 0.9;
   return 1.0;
 }
 
-/**
- * Compute the level-50 stat value.
- * @param {'hp'|'atk'|'def'|'spa'|'spd'|'spe'} stat
- */
+/** Compute the level-50 stat value. */
 export function calcStat(
-  stat,
-  base,
+  stat: StatKey,
+  base: number,
   ev = 0,
   iv = 31,
   nature = "hardy",
   level = 50,
-) {
+): number {
   const inner = Math.floor(
     ((2 * base + iv + Math.floor(ev / 4)) * level) / 100,
   );
@@ -57,8 +58,13 @@ export function calcStat(
   return Math.floor((inner + 5) * natureModifier(nature, stat));
 }
 
+interface StatMod {
+  stat: StatKey;
+  mult: number;
+}
+
 // Multipliers applied on top of the computed stat value.
-const MODS = {
+const MODS: Record<StatModifier, StatMod> = {
   scarf: { stat: "spe", mult: 1.5 },
   tailwind: { stat: "spe", mult: 2 },
   paralysis: { stat: "spe", mult: 0.5 },
@@ -76,7 +82,11 @@ const MODS = {
   grass_pelt: { stat: "def", mult: 1.5 },
 };
 
-export function applyMods(value, stat, mods) {
+export function applyMods(
+  value: number,
+  stat: StatKey,
+  mods: StatModifier[] | undefined,
+): number {
   let v = value;
   for (const mod of mods ?? []) {
     const def = MODS[mod];

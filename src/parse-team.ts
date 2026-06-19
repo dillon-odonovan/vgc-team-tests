@@ -1,14 +1,15 @@
 /**
  * Parse a Showdown/pokepaste text block into an array of team member objects.
  */
+import type { EvSpread, TeamMember } from "./types.js";
 
-export function toID(str) {
+export function toID(str: string): string {
   return String(str)
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 }
 
-const STAT_LABELS = {
+const STAT_LABELS: Record<string, keyof EvSpread> = {
   HP: "hp",
   Atk: "atk",
   Def: "def",
@@ -17,7 +18,7 @@ const STAT_LABELS = {
   Spe: "spe",
 };
 
-function parseEvLine(str, target) {
+function parseEvLine(str: string, target: Required<EvSpread>): void {
   for (const part of str.split("/")) {
     const m = part.trim().match(/^(\d+)\s+(.+)$/);
     if (!m) continue;
@@ -26,9 +27,16 @@ function parseEvLine(str, target) {
   }
 }
 
-function parseHeader(line) {
+interface ParsedHeader {
+  species: string;
+  nickname: string | null;
+  item: string | null;
+  gender: "M" | "F" | "N" | null;
+}
+
+function parseHeader(line: string): ParsedHeader {
   let rest = line.trim();
-  let item = null;
+  let item: string | null = null;
 
   // Extract " @ Item"
   const atIdx = rest.lastIndexOf(" @ ");
@@ -38,16 +46,16 @@ function parseHeader(line) {
   }
 
   // Extract trailing gender: (M), (F), or (N)
-  let gender = null;
+  let gender: "M" | "F" | "N" | null = null;
   const gm = rest.match(/\s*\(([MFN])\)\s*$/);
   if (gm) {
-    gender = gm[1];
+    gender = gm[1] as "M" | "F" | "N";
     rest = rest.slice(0, rest.length - gm[0].length).trim();
   }
 
   // Try "Nickname (Species)" pattern — last balanced parens group
-  let species,
-    nickname = null;
+  let species: string;
+  let nickname: string | null = null;
   const nickMatch = rest.match(/^(.+?)\s*\(([^()]+)\)\s*$/);
   if (nickMatch) {
     nickname = nickMatch[1].trim() || null;
@@ -59,20 +67,20 @@ function parseHeader(line) {
   return { species, nickname, item, gender };
 }
 
-function defaultEvs() {
+function defaultEvs(): Required<EvSpread> {
   return { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
 }
-function defaultIvs() {
+function defaultIvs(): Required<EvSpread> {
   return { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 };
 }
 
-function parseBlock(lines, slot) {
+function parseBlock(lines: string[], slot: number): TeamMember | null {
   if (!lines.length || !lines[0].trim()) return null;
 
   const { species, nickname, item, gender } = parseHeader(lines[0]);
   if (!species) return null;
 
-  const member = {
+  const member: TeamMember = {
     slot,
     nickname,
     species,
@@ -86,7 +94,6 @@ function parseBlock(lines, slot) {
     evs: defaultEvs(),
     ivs: defaultIvs(),
     moves: [],
-    // _types and _baseStats enriched by engine after dex lookup
   };
 
   for (const line of lines.slice(1)) {
@@ -120,11 +127,11 @@ function parseBlock(lines, slot) {
   return member;
 }
 
-export function parseShowdownPaste(text) {
+export function parseShowdownPaste(text: string): TeamMember[] {
   const blocks = text.trim().split(/\n[ \t]*\n+/);
-  const members = [];
-  for (let i = 0; i < blocks.length; i++) {
-    const lines = blocks[i].split("\n");
+  const members: TeamMember[] = [];
+  for (const block of blocks) {
+    const lines = block.split("\n");
     const member = parseBlock(lines, members.length);
     if (member) members.push(member);
   }
