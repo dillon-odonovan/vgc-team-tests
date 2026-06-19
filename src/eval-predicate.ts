@@ -34,17 +34,12 @@ import type {
   Variation,
 } from "./types.js";
 
-// Attack type(s) that trigger each specific-move moveTag's `typeImmuneToMove`
-// check. "ohko" itself is deliberately absent — it's the type-agnostic
-// universal blocker (Sturdy/Focus Sash work against any OHKO move) and has
-// no `typeImmuneToMove` branch in data/interactions.json, so it never reads
-// this map. Each real OHKO move gets its own moveTag instead: being immune
-// to Horn Drill (Normal) doesn't imply immunity to Fissure (Ground) or vice
-// versa, so they can't share one type-immunity check.
+// Attack type for each moveTag's `typeImmuneToMove` check. "ohko" has no
+// entry here — it has no `typeImmuneToMove` branch in data/interactions.json.
 const MOVE_TAG_TYPES: Record<string, string[]> = {
-  fissure: ["ground"], // Flying/Levitate/Air Balloon
-  horndrill: ["normal"], // Guillotine is the same move family; Ghost is immune
-  sheercold: ["ice"], // no type is naturally immune; listed for completeness
+  fissure: ["ground"],
+  horndrill: ["normal"],
+  sheercold: ["ice"],
 };
 
 /** Wraps a possibly-absent `tags.json` entry lookup as a 0-or-1-element list, for uniform iteration. */

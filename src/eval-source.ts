@@ -19,13 +19,7 @@ import type { SourceNode, TeamMember } from "./types.js";
 export interface EvalSourceOpts {
   /** Type-effectiveness function, injected to avoid a hard dependency on type-chart.ts. */
   typeEffectiveness?: (type: string, defenderTypes: string[]) => number;
-  /**
-   * The attack type(s) that can trigger this moveTag, e.g. `['ground',
-   * 'normal', 'ice']` for `ohko` (Fissure, Horn Drill/Guillotine, Sheer
-   * Cold respectively — a single moveTag can map to several real moves of
-   * different types). The member is immune if its typing blocks ANY one of
-   * these types — it doesn't need to be immune to all of them.
-   */
+  /** Attack type(s) this check applies to. The member is immune if its typing blocks any one of them. */
   moveTypes?: string[];
 }
 

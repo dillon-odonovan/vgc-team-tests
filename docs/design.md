@@ -36,7 +36,7 @@ That gives a three‑layer architecture, and — crucially — pushes the hard, 
 Three datasets, each versioned independently of the tests:
 
 - **`tags.json`** — a semantic taxonomy: canonical id → tags (+ facets). `speed_control`, `protect`, `setup`, `priority`, `redirection`, `hazard_removal`, … and facets like `speedControlKind: tailwind | trick_room | paralysis | lower_speed` that power "distinct **forms**".
-- **`interactions.json`** — an immunity/removal **source map**: `powder → grass‑type | Overcoat | Safety Goggles`, `prankster → dark‑type`, `intimidate → {Clear Body, Inner Focus, …} | Clear Amulet`, `ohko → Sturdy | Sash` (the type‑agnostic universal OHKO blocker), `fissure → ohko | Ground‑immune` (each real OHKO move gets its own moveTag layering the universal block on top of its specific type‑immunity — `horndrill → ohko | Normal‑immune`, `sheercold → ohko | Ice‑immune` — since dodging one doesn't imply dodging another). The generic `immuneTo` / `canRemove` atoms read this, so new sources are a data edit.
+- **`interactions.json`** — an immunity/removal **source map**: `powder → grass‑type | Overcoat | Safety Goggles`, `prankster → dark‑type`, `intimidate → {Clear Body, Inner Focus, …} | Clear Amulet`, `ohko → Sturdy | Sash`, `fissure → ohko | Ground‑immune` (each real OHKO move — `horndrill`, `sheercold` — layers the universal `ohko` block on top of its own type‑immunity). The generic `immuneTo` / `canRemove` atoms read this, so new sources are a data edit.
 - **`threats.json`** — named calc targets and meta‑resolved groups, with `set:"usage"` as the low‑friction default (name a species, the spread fills in from usage stats).
 
 A test references these by name. The test logic is stable; the domain knowledge is a living document.
