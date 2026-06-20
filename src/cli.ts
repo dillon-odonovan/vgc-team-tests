@@ -8,6 +8,7 @@
  */
 import { readFileSync } from "node:fs";
 import { runSuite, runTests } from "./engine.js";
+import { loadReferenceData } from "./load-data.js";
 import type { Report, Suite } from "./types.js";
 
 interface Args {
@@ -185,9 +186,10 @@ async function main(): Promise<void> {
     const testIds = args.tests
       ? args.tests.split(",").map((s) => s.trim())
       : null;
+    const data = loadReferenceData();
     const report = testIds
-      ? await runTests(suiteData, teamText, testIds)
-      : await runSuite(suiteData, teamText);
+      ? await runTests(suiteData, teamText, testIds, data)
+      : await runSuite(suiteData, teamText, data);
 
     if (args.pretty) printSummary(report);
     process.stdout.write(JSON.stringify(report, null, 2) + "\n");

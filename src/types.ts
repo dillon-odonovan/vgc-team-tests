@@ -438,6 +438,17 @@ export interface ThreatsLib {
   [k: string]: unknown;
 }
 
+/**
+ * The reference data the engine evaluates against. Supplied by the host (the
+ * CLI loads it from `data/*.json`; the web app bundles it) so the engine itself
+ * stays filesystem-free and browser-compatible.
+ */
+export interface ReferenceData {
+  tags: TagsData;
+  interactions: InteractionsData;
+  threatsLib: ThreatsLib;
+}
+
 // ---------------------------------------------------------------------------
 // Evaluation context
 // ---------------------------------------------------------------------------
