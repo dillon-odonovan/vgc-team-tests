@@ -3,31 +3,18 @@
  * returns a `VGCTeamTestReport`-shaped object. This is the main entry point
  * for embedding the engine in other code — see {@link runSuite}.
  */
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join, resolve } from "node:path";
-
 import { gen9 } from "./dex.js";
 import { evalAssertion } from "./eval-assertion.js";
 import { parseShowdownPaste } from "./parse-team.js";
 import { enrichTeam } from "./team-member.js";
 import type {
   EvalContext,
-  InteractionsData,
+  ReferenceData,
   Report,
   Result,
   Suite,
   Tally,
-  TagsData,
-  ThreatsLib,
 } from "./types.js";
-
-const here = dirname(fileURLToPath(import.meta.url));
-const root = resolve(here, "..");
-
-function loadJSON<T>(rel: string): T {
-  return JSON.parse(readFileSync(join(root, rel), "utf8")) as T;
-}
 
 /** Tallies pass/fail counts per severity for the report's `summary` field. */
 function buildSummary(
@@ -50,21 +37,15 @@ function cleanResult(r: Result): Result {
   return Object.fromEntries(entries) as unknown as Result;
 }
 
-/** Optional overrides for the reference data the engine would otherwise load from `data/*.json` — mainly for tests. */
-export interface RunSuiteOpts {
-  tags?: TagsData;
-  interactions?: InteractionsData;
-  threatsLib?: ThreatsLib;
-}
-
 /**
  * Runs every test in a suite against a team.
  *
  * @param suite - A parsed suite document (a `VGCTeamTestSuite`).
  * @param teamText - Showdown/pokepaste paste text for the team under test.
- * @param opts - Overrides for the reference data sources; defaults to
- *   loading `data/tags.json`, `data/interactions.json`, and
- *   `data/threats.json` from the package root.
+ * @param data - The reference data to evaluate against (`tags`,
+ *   `interactions`, `threatsLib`). The engine is filesystem-free; Node hosts
+ *   load this with `loadReferenceData()` from `./load-data.js` and the web app
+ *   bundles the `data/*.json` files directly.
  * @returns The completed report: per-test results, severity summary, and
  *   an overall `passed` flag (true iff every `error`-severity test passed).
  * @throws If the team paste contains no Pokémon.
@@ -72,24 +53,18 @@ export interface RunSuiteOpts {
 export async function runSuite(
   suite: Suite,
   teamText: string,
-  opts: RunSuiteOpts = {},
+  data: ReferenceData,
 ): Promise<Report> {
   const team = parseShowdownPaste(teamText);
   if (!team.length) throw new Error("No Pokémon found in team paste.");
-
-  const tags = opts.tags ?? loadJSON<TagsData>("data/tags.json");
-  const interactions =
-    opts.interactions ?? loadJSON<InteractionsData>("data/interactions.json");
-  const threatsLib =
-    opts.threatsLib ?? loadJSON<ThreatsLib>("data/threats.json");
 
   enrichTeam(team, gen9);
 
   const ctx: EvalContext = {
     suite,
-    tags,
-    interactions,
-    threatsLib,
+    tags: data.tags,
+    interactions: data.interactions,
+    threatsLib: data.threatsLib,
     each: null,
   };
 
@@ -139,7 +114,7 @@ export async function runTests(
   suite: Suite,
   teamText: string,
   testIds: string[],
-  opts: RunSuiteOpts = {},
+  data: ReferenceData,
 ): Promise<Report> {
   const filtered: Suite = {
     ...suite,
@@ -147,5 +122,5 @@ export async function runTests(
   };
   if (!filtered.tests.length)
     throw new Error(`No tests matched: ${testIds.join(", ")}`);
-  return runSuite(filtered, teamText, opts);
+  return runSuite(filtered, teamText, data);
 }

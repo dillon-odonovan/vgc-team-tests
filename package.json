@@ -25,6 +25,9 @@
     "build:test": "tsc -p tsconfig.test.json",
     "dev": "tsx src/cli.ts",
     "run": "node dist/cli.js",
+    "web:dev": "npm --prefix web run dev",
+    "web:build": "npm --prefix web run build",
+    "deploy": "npm run web:build && firebase deploy --only hosting",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
     "prepare": "husky",
     "lint:staged": "lint-staged --config .lintstagedrc"

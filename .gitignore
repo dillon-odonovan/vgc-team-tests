@@ -3,3 +3,9 @@ node_modules/
 .DS_Store
 dist/
 dist-test/
+
+# Firebase local artifacts and credentials (never commit service-account keys)
+.firebase/
+firebase-debug.log
+*serviceAccount*.json
+*.key
