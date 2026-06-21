@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-import { SAMPLE_TEAM, SUITES, evaluate } from "./engine-host.ts";
-import type { Report, Result } from "../../src/types.ts";
+import { BUNDLED_SUITES, SAMPLE_TEAM, evaluate } from "./engine-host.ts";
+import {
+  deleteCustomSuite,
+  listCustomSuites,
+  newSuiteId,
+  saveCustomSuite,
+} from "./storage.ts";
+import { emptySuite } from "./suite-defaults.ts";
+import { SuiteEditor } from "./components/SuiteEditor.tsx";
+import type { Report, Result, Suite } from "../../src/types.ts";
 
 const SEVERITY_STYLES: Record<string, string> = {
   error: "bg-red-100 text-red-800 ring-red-200",
@@ -100,20 +108,47 @@ function ResultCard({ result }: { result: Result }) {
   );
 }
 
+interface PickerEntry {
+  id: string;
+  label: string;
+  suite: Suite;
+  custom: boolean;
+}
+
 export default function App() {
-  const [suiteId, setSuiteId] = useState(SUITES[0].id);
+  const [customSuites, setCustomSuites] = useState(() => listCustomSuites());
+  const [suiteId, setSuiteId] = useState(BUNDLED_SUITES[0].id);
   const [teamText, setTeamText] = useState(SAMPLE_TEAM);
   const [report, setReport] = useState<Report | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+  // null when the editor is closed; `{ id }` is null for a brand-new suite.
+  const [editing, setEditing] = useState<{
+    id: string | null;
+    suite: Suite;
+  } | null>(null);
+
+  const entries = useMemo<PickerEntry[]>(
+    () => [
+      ...BUNDLED_SUITES.map((e) => ({ ...e, custom: false })),
+      ...customSuites.map((r) => ({
+        id: r.id,
+        label: r.label,
+        suite: r.suite,
+        custom: true,
+      })),
+    ],
+    [customSuites],
+  );
+
+  const selected = entries.find((e) => e.id === suiteId) ?? entries[0];
 
   async function runTests() {
-    const entry = SUITES.find((s) => s.id === suiteId);
-    if (!entry) return;
+    if (!selected) return;
     setRunning(true);
     setError(null);
     try {
-      const result = await evaluate(entry.suite, teamText);
+      const result = await evaluate(selected.suite, teamText);
       setReport(result);
     } catch (err) {
       setReport(null);
@@ -121,6 +156,23 @@ export default function App() {
     } finally {
       setRunning(false);
     }
+  }
+
+  function handleSave(suite: Suite) {
+    const id = editing?.id ?? newSuiteId();
+    setCustomSuites(saveCustomSuite(id, suite));
+    setSuiteId(id);
+    setReport(null);
+    setError(null);
+    setEditing(null);
+  }
+
+  function handleDelete() {
+    if (!selected?.custom) return;
+    setCustomSuites(deleteCustomSuite(selected.id));
+    setSuiteId(BUNDLED_SUITES[0].id);
+    setReport(null);
+    setError(null);
   }
 
   return (
@@ -143,18 +195,62 @@ export default function App() {
           >
             Suite
           </label>
-          <select
-            id="suite"
-            value={suiteId}
-            onChange={(e) => setSuiteId(e.target.value)}
-            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
-          >
-            {SUITES.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label}
-              </option>
-            ))}
-          </select>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <select
+              id="suite"
+              value={suiteId}
+              onChange={(e) => setSuiteId(e.target.value)}
+              className="min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
+            >
+              <optgroup label="Bundled">
+                {entries
+                  .filter((s) => !s.custom)
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.label}
+                    </option>
+                  ))}
+              </optgroup>
+              {customSuites.length > 0 && (
+                <optgroup label="Custom">
+                  {entries
+                    .filter((s) => s.custom)
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.label}
+                      </option>
+                    ))}
+                </optgroup>
+              )}
+            </select>
+            <button
+              type="button"
+              onClick={() => setEditing({ id: null, suite: emptySuite() })}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              New
+            </button>
+            {selected?.custom && (
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEditing({ id: selected.id, suite: selected.suite })
+                  }
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="rounded-md border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  Delete
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         <div>
@@ -211,6 +307,14 @@ export default function App() {
             ))}
           </ul>
         </section>
+      )}
+
+      {editing && (
+        <SuiteEditor
+          initial={editing.suite}
+          onSave={handleSave}
+          onCancel={() => setEditing(null)}
+        />
       )}
     </div>
   );

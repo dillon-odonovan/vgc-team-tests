@@ -30,9 +30,10 @@ export interface SuiteEntry {
 
 /**
  * The suites shipped with the app. Add a line here to expose another bundled
- * suite in the picker.
+ * suite in the picker. User-authored suites live in localStorage (see
+ * storage.ts) and are merged into the picker by App.tsx.
  */
-export const SUITES: SuiteEntry[] = [
+export const BUNDLED_SUITES: SuiteEntry[] = [
   {
     id: "reg-m-a-baseline",
     label: (regMaBaseline as { name?: string }).name ?? "Reg M-A baseline",
