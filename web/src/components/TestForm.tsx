@@ -2,16 +2,21 @@
  * Editor for a single Test: metadata plus an assertion editor that switches
  * between the four assertion shapes (count / countDistinct / coverage / team).
  */
-import type { Assert, Op, Predicate, Test } from "../../../src/types.ts";
+import type { Assert, Predicate, Test } from "../../../src/types.ts";
 import {
-  OPS,
   SEVERITIES,
   assertShapeOf,
   defaultAssert,
   defaultPredicate,
   type AssertShape,
 } from "../suite-defaults.ts";
-import { Field, NumberInput, SelectInput, TextInput } from "./fields.tsx";
+import {
+  Field,
+  NumberInput,
+  OpValue,
+  SelectInput,
+  TextInput,
+} from "./fields.tsx";
 import { PredicateField } from "./PredicateField.tsx";
 
 export function TestForm({
@@ -185,29 +190,6 @@ function AssertEditor({
         value={(assert as { team: Predicate }).team}
         onChange={(team) => onChange({ team })}
       />
-    </div>
-  );
-}
-
-function OpValue({
-  op,
-  value,
-  onOp,
-  onValue,
-}: {
-  op: Op;
-  value: number;
-  onOp: (op: Op) => void;
-  onValue: (v: number) => void;
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      <Field label="op">
-        <SelectInput<Op> value={op} options={OPS} onChange={onOp} />
-      </Field>
-      <Field label="value">
-        <NumberInput value={value} onChange={onValue} />
-      </Field>
     </div>
   );
 }

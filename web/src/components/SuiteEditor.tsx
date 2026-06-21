@@ -35,6 +35,14 @@ export function SuiteEditor({
 
   const validation = useMemo(() => validateSuite(suite), [suite]);
   const canSave = validation.valid && !jsonError;
+  // The JSON tab accepts any syntactically-valid JSON (e.g. `null`, `{}`, or
+  // `42`), which schema validation correctly rejects but doesn't stop from
+  // reaching the Builder tab's JSX. Guard against that shape here so editing
+  // a malformed suite shows a message instead of throwing on `suite.tests`.
+  const isBuilderSafe =
+    suite !== null &&
+    typeof suite === "object" &&
+    Array.isArray((suite as Suite | null)?.tests);
 
   function switchTab(next: Tab) {
     if (next === "json") {
@@ -116,7 +124,13 @@ export function SuiteEditor({
 
         {/* Body */}
         <div className="max-h-[65vh] space-y-4 overflow-y-auto px-5 py-4">
-          {tab === "builder" ? (
+          {tab === "builder" && !isBuilderSafe ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              This JSON isn't a suite object yet (it needs at least a{" "}
+              <code>tests</code> array). Fix it in the JSON tab before switching
+              back to the Builder.
+            </div>
+          ) : tab === "builder" ? (
             <>
               <div className="grid grid-cols-2 gap-2">
                 <Field label="name">

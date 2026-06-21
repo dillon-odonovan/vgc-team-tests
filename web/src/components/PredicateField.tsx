@@ -4,7 +4,7 @@
  * full union from src/types.ts is the source of truth — kinds not given a
  * dedicated form here can still be edited in the JSON tab.
  */
-import type { Predicate } from "../../../src/types.ts";
+import type { Op, Predicate } from "../../../src/types.ts";
 import {
   OPS,
   PREDICATE_KINDS,
@@ -16,6 +16,7 @@ import {
   Checkbox,
   Field,
   NumberInput,
+  OpValue,
   SelectInput,
   TextInput,
 } from "./fields.tsx";
@@ -137,7 +138,7 @@ function renderBody(
     case "level":
       return (
         <OpValue
-          op={p.op as string}
+          op={p.op as Op}
           value={p.value as number}
           onOp={(op) => set({ op })}
           onValue={(value) => set({ value })}
@@ -214,7 +215,7 @@ function renderBody(
             </Field>
           </div>
           <OpValue
-            op={p.op as string}
+            op={p.op as Op}
             value={p.value as number}
             onOp={(op) => set({ op })}
             onValue={(value) => set({ value })}
@@ -267,7 +268,7 @@ function renderBody(
             onChange={(withTera) => set({ withTera })}
           />
           <OpValue
-            op={p.op as string}
+            op={p.op as Op}
             value={p.value as number}
             step={0.25}
             onOp={(op) => set({ op })}
@@ -402,6 +403,30 @@ function renderBody(
         </div>
       );
     }
+    case "foulPlay":
+      return (
+        <div className="grid grid-cols-3 gap-2">
+          <Field label="scenario" className="col-span-1">
+            <TextInput
+              value={(p.scenario as string) ?? ""}
+              onChange={(scenario) => set({ scenario })}
+            />
+          </Field>
+          <Field label="threshold (optional)">
+            <NumberInput
+              value={(p.threshold as number) ?? 0}
+              step={0.05}
+              onChange={(threshold) => set({ threshold })}
+            />
+          </Field>
+          <Field label="samples (optional)">
+            <NumberInput
+              value={(p.samples as number) ?? 0}
+              onChange={(samples) => set({ samples })}
+            />
+          </Field>
+        </div>
+      );
     default:
       return (
         <p className="text-xs text-slate-500">
@@ -409,31 +434,6 @@ function renderBody(
         </p>
       );
   }
-}
-
-function OpValue({
-  op,
-  value,
-  step,
-  onOp,
-  onValue,
-}: {
-  op: string;
-  value: number;
-  step?: number;
-  onOp: (op: string) => void;
-  onValue: (v: number) => void;
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      <Field label="op">
-        <SelectInput value={op} options={OPS} onChange={onOp} />
-      </Field>
-      <Field label="value">
-        <NumberInput value={value} step={step} onChange={onValue} />
-      </Field>
-    </div>
-  );
 }
 
 function CompositeList({

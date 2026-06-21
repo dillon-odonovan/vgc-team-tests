@@ -50,8 +50,11 @@ export function newSuiteId(): string {
   return `suite-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** Inserts or updates a suite by id, refreshing its label and timestamp. */
-export function saveCustomSuite(id: string, suite: Suite): CustomSuiteRecord {
+/**
+ * Inserts or updates a suite by id, refreshing its label and timestamp.
+ * Returns the full updated list so callers don't need a second read.
+ */
+export function saveCustomSuite(id: string, suite: Suite): CustomSuiteRecord[] {
   const record: CustomSuiteRecord = {
     id,
     label: labelFor(suite),
@@ -59,11 +62,14 @@ export function saveCustomSuite(id: string, suite: Suite): CustomSuiteRecord {
     updatedAt: Date.now(),
   };
   const rest = listCustomSuites().filter((r) => r.id !== id);
-  writeAll([record, ...rest]);
-  return record;
+  const all = [record, ...rest];
+  writeAll(all);
+  return all;
 }
 
-/** Removes a suite by id. */
-export function deleteCustomSuite(id: string): void {
-  writeAll(listCustomSuites().filter((r) => r.id !== id));
+/** Removes a suite by id. Returns the full updated list. */
+export function deleteCustomSuite(id: string): CustomSuiteRecord[] {
+  const all = listCustomSuites().filter((r) => r.id !== id);
+  writeAll(all);
+  return all;
 }

@@ -160,20 +160,19 @@ export default function App() {
 
   function handleSave(suite: Suite) {
     const id = editing?.id ?? newSuiteId();
-    saveCustomSuite(id, suite);
-    setCustomSuites(listCustomSuites());
+    setCustomSuites(saveCustomSuite(id, suite));
     setSuiteId(id);
     setReport(null);
+    setError(null);
     setEditing(null);
   }
 
   function handleDelete() {
     if (!selected?.custom) return;
-    deleteCustomSuite(selected.id);
-    const remaining = listCustomSuites();
-    setCustomSuites(remaining);
+    setCustomSuites(deleteCustomSuite(selected.id));
     setSuiteId(BUNDLED_SUITES[0].id);
     setReport(null);
+    setError(null);
   }
 
   return (

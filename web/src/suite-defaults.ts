@@ -39,6 +39,7 @@ export const PREDICATE_KINDS: BuilderPredicateKind[] = [
   "survives",
   "koes",
   "dealsDamage",
+  "foulPlay",
 ];
 
 export type AssertShape = "count" | "countDistinct" | "coverage" | "team";
@@ -100,6 +101,8 @@ export function defaultPredicate(kind: BuilderPredicateKind): Predicate {
         threat: "",
         fraction: { op: ">=", value: 0.5 },
       };
+    case "foulPlay":
+      return { kind: "foulPlay", scenario: "" };
     default:
       return { kind: "species", is: "" };
   }

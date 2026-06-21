@@ -38,8 +38,28 @@ function formatError(err: ErrorObject): string {
 export function validateSuite(value: unknown): ValidationResult {
   const valid = validate(value) as boolean;
   if (valid) return { valid: true, errors: [] };
-  // oneOf unions (predicates) make ajv emit an error per failing branch, so the
-  // raw list is noisy and repetitive — dedupe to keep the panel readable.
-  const errors = [...new Set((validate.errors ?? []).map(formatError))];
+
+  // The Predicate union has ~25 `oneOf` branches, so a single bad predicate
+  // makes ajv emit one error per failing branch at the same instancePath,
+  // plus a content-free "must match exactly one schema in oneOf" aggregator.
+  // Drop the aggregator (it never has actionable detail) and collapse the
+  // rest per instancePath so one bad field shows a short, readable list
+  // instead of dozens of near-duplicate lines.
+  const byPath = new Map<string, Set<string>>();
+  for (const err of validate.errors ?? []) {
+    if (err.keyword === "oneOf") continue;
+    const path = err.instancePath || "(root)";
+    const messages = byPath.get(path) ?? new Set<string>();
+    messages.add(formatError(err));
+    byPath.set(path, messages);
+  }
+
+  const errors: string[] = [];
+  for (const messages of byPath.values()) {
+    const list = [...messages];
+    errors.push(...list.slice(0, 3));
+    if (list.length > 3)
+      errors.push(`…and ${list.length - 3} more for this field`);
+  }
   return { valid: false, errors };
 }
