@@ -1,8 +1,0 @@
-.terraform/
-*.tfstate
-*.tfstate.*
-*.tfvars
-*serviceAccount*.json
-*key*.json
-tfplan
-*.tfplan
